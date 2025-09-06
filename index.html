@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang chủ</title>
+    <!-- Page.js router -->
+    <script src="https://unpkg.com/page/page.js"></script>
+    <link rel="stylesheet" href="../style/style.css">
+    <script src="../data/data.js"></script>
+    <script src="../js/script.js"></script>
+    <style>
+    </style>
+</head>
+<body>
+    <main id="app"></main>
+    <script>
+        page('/', () => {
+            loadPage('html/home.html');
+            setTimeout(() => {        
+                // document.body.setAttribute('data-page', 'login');        
+                renderProcedures();
+                renderRecords();
+                renderPagination();
+            }, 100);
+        });
+
+        // page('*', () => {
+        //     loadPage('html/login.html');
+        //     setTimeout(() => {
+        //     }, 100);
+        // });
+
+        page('/home', () => {
+            loadPage('html/home.html');
+            setTimeout(() => {           
+                document.body.removeAttribute('data-page');     
+                renderProcedures();
+                renderRecords();
+                renderPagination();
+            }, 100);
+        });
+        
+        page({ hashbang: true });
+    </script>
+</body>
+</html>

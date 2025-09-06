@@ -1,0 +1,378 @@
+* {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body[data-page='login'] #app {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+}
+
+/* Layout chung */
+.main-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 300px;
+    background: #fff;
+    border-right: 1px solid #e5e7eb;
+    padding: 1.5rem 1rem;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.03);
+}
+
+.sidebar h3 {
+    margin-top: 0;
+    color: #0284c7;
+    font-size: 1.2rem;
+}
+
+.procedure-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.procedure-list li {
+    margin-bottom: 0.5rem;
+}
+
+.procedure-list .parent {
+    font-weight: 600;
+    color: #333;
+}
+
+.procedure-list .child {
+    margin-left: 1.5rem;
+    color: #666;
+}
+
+.content {
+    flex: 1;
+    padding: 2rem 2vw;
+}
+
+.content h2 {
+    margin-top: 0;
+    color: #0284c7;
+}
+
+.records-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.records-table th, .records-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+.records-table th {
+    background: #f1f5f9;
+    color: #333;
+}
+
+.records-table tr:last-child td {
+    border-bottom: none;
+}
+
+.pagination {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.pagination button {
+    background: #fff;
+    border: 1px solid #0ea5e9;
+    color: #0ea5e9;
+    padding: 0.4rem 0.9rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+.pagination button.active, .pagination button:hover {
+    background: #0ea5e9;
+    color: #fff;
+}
+
+/* Login form chung */
+.login-container {
+    background: #fff;
+    padding: 2.5rem 2rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+    max-width: 350px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.login-container h2 {
+    margin: 0 0 1rem 0;
+    text-align: center;
+    color: #0ea5e9;
+}
+
+.login-container input {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    outline: none;
+    transition: border 0.2s;
+}
+
+.login-container input:focus {
+    border: 1.5px solid #0ea5e9;
+}
+
+.login-container button {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.login-container button:hover {
+    background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+}
+
+.login-container .error {
+    color: #e53e3e;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+/* Modern home page styles */
+.modern-home {
+    background: linear-gradient(120deg, #f0f9ff 60%, #bae6fd 100%);
+}
+
+.modern-sidebar {
+    background: #fff;
+    border-radius: 1.2rem;
+    margin: 2rem 1rem 2rem 2rem;
+    box-shadow: 0 4px 24px 0 rgba(80, 112, 255, 0.08);
+    min-width: 250px;
+    max-width: 320px;
+    padding: 2rem 1.2rem;
+}
+
+.modern-sidebar h3 {
+    font-size: 1.3rem;
+    color: #0ea5e9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.procedure-list li {
+    padding: 0.5rem 1rem;
+    border-radius: 0.7rem;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+}
+
+.procedure-list li.parent {
+    font-weight: bold;
+    color: #0ea5e9;
+}
+
+.procedure-list li.child {
+    margin-left: 1.5rem;
+    color: #0284c7;
+    font-weight: 500;
+}
+
+.procedure-list li:hover {
+    background: #bae6fd;
+    color: #0369a1;
+}
+
+.procedure-list li.active-parent {
+    background: #0ea5e9 !important;
+    color: #fff !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(80, 112, 255, 0.10);
+}
+
+.procedure-list li.active-child {
+    background: #bae6fd !important;
+    color: #0369a1 !important;
+    font-weight: 600;
+}
+
+.toggle-icon {
+    font-size: 1.35rem;
+    margin-right: 0.7rem;
+    font-weight: 900;
+    user-select: none;
+    display: inline-block;
+    vertical-align: middle;
+    transition: color 0.2s;
+}
+
+.modern-content {
+    padding: 2.5rem 3vw;
+}
+
+.content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.content-header h2 {
+    color: #0ea5e9;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.add-record-btn {
+    background: linear-gradient(90deg, #38bdf8 0%, #0ea5e9 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.7rem;
+    padding: 0.6rem 1.3rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(80, 112, 255, 0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.add-record-btn:hover {
+    background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+    box-shadow: 0 4px 16px rgba(80, 112, 255, 0.15);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.06);
+}
+
+.modern-table {
+    min-width: 600px;
+    border-radius: 1.2rem;
+    overflow: hidden;
+}
+
+.modern-table th, .modern-table td {
+    padding: 1rem 1.2rem;
+    font-size: 1.05rem;
+    text-align: center;
+}
+
+.modern-table th {
+    background: #bae6fd;
+    color: #0369a1;
+    font-weight: 700;
+}
+
+.modern-table tr {
+    transition: background 0.2s;
+}
+
+.modern-table tr:hover {
+    background: #e0f2fe;
+}
+
+.modern-pagination {
+    margin-top: 1.5rem;
+}
+
+.modern-pagination button {
+    border-radius: 0.5rem;
+    border: 1.5px solid #0ea5e9;
+    color: #0ea5e9;
+    background: #fff;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+
+.modern-pagination button.active, .modern-pagination button:hover {
+    background: #0ea5e9;
+    color: #fff;
+}
+
+@media (max-width: 900px) {
+    .modern-home { 
+        flex-direction: column; 
+    }
+
+    .modern-sidebar {
+        margin: 1rem;
+        min-width: unset;
+        max-width: unset;
+    }
+
+    .modern-content {
+        padding: 1.2rem 2vw;
+    }
+
+    .main-layout { 
+        flex-direction: column; 
+    }
+
+    .sidebar { 
+        width: 100%; 
+        border-right: none; 
+        border-bottom: 1px solid #e5e7eb; 
+    }
+}
+
+@media (max-width: 600px) {
+    .modern-sidebar {
+        padding: 1rem 0.5rem;
+        margin: 0.5rem;
+    }
+
+    .modern-content {
+        padding: 0.5rem 1vw;
+    }
+
+    .modern-table th, .modern-table td {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .add-record-btn {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.95rem;
+    }
+
+    .login-container {
+        padding: 2rem 1rem;
+        max-width: 95vw;
+    }
+}
