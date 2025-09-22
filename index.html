@@ -16,13 +16,20 @@
     <main id="app"></main>
     <script>
         page('/', () => {
-            loadPage('html/home.html');
-            setTimeout(() => {        
+            loadPage('html/home.html', 'app').then(() => {
                 // document.body.setAttribute('data-page', 'login');        
                 renderProcedures();
                 renderRecords();
                 renderPagination();
-            }, 100);
+                    
+                document.getElementById('sidebarToggle').onclick = function() {
+                    const sidebar = document.getElementById('sidebar');
+                    sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
+                };
+                
+                window.addEventListener('resize', handleSidebarMobile);
+                handleSidebarMobile();
+            });
         });
 
         // page('*', () => {
@@ -32,13 +39,41 @@
         // });
 
         page('/home', () => {
-            loadPage('html/home.html');
-            setTimeout(() => {           
+            loadPage('html/home.html', 'app').then(() => {
                 document.body.removeAttribute('data-page');     
                 renderProcedures();
                 renderRecords();
                 renderPagination();
-            }, 100);
+                 
+                let sidebarToggle = document.getElementById('sidebarToggle');
+                if (sidebarToggle) {
+                    document.getElementById('sidebarToggle').onclick = function() {
+                        const sidebar = document.getElementById('sidebar');
+                        sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
+                    };
+                }
+                
+                window.addEventListener('resize', handleSidebarMobile);
+                handleSidebarMobile();
+            });
+        });
+
+        page('/procedure', () => {
+            loadPage('html/procedure.html', 'modern-content').then(() => {
+                document.body.removeAttribute('data-page');
+                renderSteps();
+                selectStep(0);
+                window.addEventListener('resize', () => {
+                    renderSteps();
+                    selectStep(0);
+                });  
+            });
+        });
+
+        page('/record', () => {
+            loadPage('html/record.html', 'modern-content').then(() => {
+                document.body.removeAttribute('data-page');
+            });
         });
         
         page({ hashbang: true });
