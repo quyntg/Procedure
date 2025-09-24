@@ -1,4 +1,6 @@
+const ggApiUrl = 'https://script.google.com/macros/s/AKfycbyUWAmBNwl3QUua9JCBk9nsIVi_LuKlW1_llsNSqHgTtbPjlkx9AC0gPP5G4z_9dQ0z/exec';
 // Dữ liệu mẫu cho thủ tục (có phân cấp)
+
 const procedures = [
     { id: 1, name: 'Thủ tục A', children: [
         { id: 11, name: 'Thủ tục A1' },
@@ -83,3 +85,9 @@ const steps = [{
     title: "Báo cáo",
     desc: "Tổng kết và lập báo cáo hoàn tất."
 }, ];
+
+// Spinner SVG template
+const SPINNER_SVG = '<svg class="spinner-svg" width="24" height="24" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">\
+    <circle class="spinner-bg" cx="25" cy="25" r="20" stroke="#bae6fd" stroke-width="5"/>\
+    <circle class="spinner-fg" cx="25" cy="25" r="20" stroke="#0ea5e9" stroke-width="5" stroke-linecap="round" stroke-dasharray="90 60"/>\
+</svg>';

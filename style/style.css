@@ -481,6 +481,35 @@ h2 {
     box-shadow: 0 4px 16px rgba(80, 112, 255, 0.15);
 }
 
+/* Spinner styles */
+.spinner-svg {
+    vertical-align: middle;
+    margin-right: 0.4em;
+    animation: spinner-rotate 0.9s linear infinite;
+    display: inline-block;
+}
+.spinner-bg {
+    stroke: #bae6fd;
+    opacity: 0.5;
+}
+.spinner-fg {
+    stroke: #0ea5e9;
+    stroke-linecap: round;
+    animation: spinner-dash 1.2s ease-in-out infinite;
+}
+@keyframes spinner-rotate {
+    100% { transform: rotate(360deg); }
+}
+@keyframes spinner-dash {
+    0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
+    50% { stroke-dasharray: 90, 60; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 90, 60; stroke-dashoffset: -124; }
+}
+.btn-loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
 @media (max-width: 1024px) {
     #timeline {
         flex-direction: column;

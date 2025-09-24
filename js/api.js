@@ -44,7 +44,7 @@ function doOptions(e) {
 }
 
 function login(username, password) {
-	var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('login');
+	var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('users');
 	if (!sheet) {
 		return {
 			success: false,
@@ -52,14 +52,18 @@ function login(username, password) {
 		};
 	}
 	var data = sheet.getDataRange().getValues();
-	for (var i = 1; i < data.length; i++) { // Bỏ qua header
-		if (data[i][0] == username && data[i][1] == password) {
+  	const headers = data.shift();
+	const usernameIdx = headers.indexOf('username');
+	const passwordIdx = headers.indexOf('password');
+
+	for (var i = 0; i < data.length; i++) { // Bỏ qua header
+		if (data[i][usernameIdx] == username && data[i][passwordIdx] == password) {
 			// Lấy dữ liệu bảng login (bỏ header)
 			var users = [];
-			for (var j = 1; j < data.length; j++) {
+			for (var j = 0; j < data.length; j++) {
 				var user = {};
-				for (var k = 0; k < data[0].length; k++) {
-					user[data[0][k]] = data[j][k];
+				for (var k = 0; k < headers.length; k++) {
+					user[headers[k]] = data[j][k];
 				}
 				users.push(user);
 			}

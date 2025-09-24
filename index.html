@@ -15,28 +15,34 @@
 <body>
     <main id="app"></main>
     <script>
-        page('/', () => {
-            loadPage('html/home.html', 'app').then(() => {
-                // document.body.setAttribute('data-page', 'login');        
-                renderProcedures();
-                renderRecords();
-                renderPagination();
+        // page('/', () => {
+        //     loadPage('html/home.html', 'app').then(() => {
+        //         // document.body.setAttribute('data-page', 'login');        
+        //         renderProcedures();
+        //         renderRecords();
+        //         renderPagination();
                     
-                document.getElementById('sidebarToggle').onclick = function() {
-                    const sidebar = document.getElementById('sidebar');
-                    sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
-                };
+        //         document.getElementById('sidebarToggle').onclick = function() {
+        //             const sidebar = document.getElementById('sidebar');
+        //             sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
+        //         };
                 
-                window.addEventListener('resize', handleSidebarMobile);
-                handleSidebarMobile();
+        //         window.addEventListener('resize', handleSidebarMobile);
+        //         handleSidebarMobile();
+        //     });
+        // });
+
+        page('/', () => {
+            loadPage('html/login.html', 'app').then(() => {
+                document.body.setAttribute('data-page', 'login');   
+                window.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        login();
+                    }
+                });
             });
         });
-
-        // page('*', () => {
-        //     loadPage('html/login.html');
-        //     setTimeout(() => {
-        //     }, 100);
-        // });
 
         page('/home', () => {
             loadPage('html/home.html', 'app').then(() => {

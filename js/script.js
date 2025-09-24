@@ -29,17 +29,36 @@ function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
     const errorDiv = document.getElementById('error');
+    const loginBtn = document.getElementById('login-btn');
     errorDiv.textContent = '';
     if (!username || !password) {
         errorDiv.textContent = 'Vui lòng nhập đầy đủ thông tin.';
         return;
     }
-    // Demo: kiểm tra tài khoản cố định
-    if (username === 'admin' && password === '123@123') {
-        page('/home');
-    } else {
-        errorDiv.textContent = 'Tên đăng nhập hoặc mật khẩu không đúng.';
-    }
+    // Hiển thị spinner trên nút đăng nhập
+    initSpinner(loginBtn);
+    // Gọi API Google Apps Script
+    fetch(ggApiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `action=login&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        removeSpinner(loginBtn);
+        if (data.success) {
+            page('/home');
+            // Nếu muốn lưu thông tin users: localStorage.setItem('users', JSON.stringify(data.users));
+        } else {
+            errorDiv.textContent = data.message || 'Tên đăng nhập hoặc mật khẩu không đúng.';
+        }
+    })
+    .catch(() => {
+        removeSpinner(loginBtn);
+        errorDiv.textContent = 'Lỗi kết nối máy chủ.';
+    });
 }
 
 // home js
@@ -309,6 +328,7 @@ function handleSidebarMobile() {
 function viewRecord(id) {
     page('/record?id=' + id);
 }
+
 function showModal(type) {
     const modal = document.getElementById('modal-confirm');
     const msg = document.getElementById('modal-message');
@@ -337,6 +357,23 @@ function showModal(type) {
         modal.style.display = 'none';
     };
 }
+
+// Hàm khởi tạo spinner cho button
+function initSpinner(btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.insertAdjacentHTML('afterbegin', SPINNER_SVG);
+}
+
+function removeSpinner(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    const spinner = btn.querySelector('.spinner-svg');
+    if (spinner) spinner.remove();
+}
+
 function goBack() {
     window.history.back();
 }
