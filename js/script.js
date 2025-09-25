@@ -82,6 +82,12 @@ function renderProcedures() {
             const nameSpan = document.createElement('span');
             nameSpan.textContent = ' ' + proc.name;
             li.appendChild(nameSpan);
+            // Thêm counter góc phải
+            const counter = document.createElement('span');
+            counter.className = 'li-counter';
+            counter.textContent = proc.counter !== undefined ? proc.counter : '';
+            li.appendChild(counter);
+            li.style.position = 'relative';
             li.onclick = (e) => {
                 if (e.target === icon) {
                     // Toggle expand/collapse cho parent này
@@ -117,6 +123,7 @@ function renderProcedures() {
             };
         } else {
             li.textContent = proc.name;
+            li.style.position = 'relative';
             li.onclick = () => {
                 selectedId = proc.id;
                 if (proc.id === "procedure") {
@@ -139,6 +146,17 @@ function renderProcedures() {
                 const cli = document.createElement('li');
                 cli.textContent = child.name;
                 cli.className = 'child procedure-child';
+                // Thêm counter cho child
+                const counter = document.createElement('span');
+                counter.className = 'li-counter';
+                if (child.counter !== undefined && child.counter !== null && child.counter !== '') {
+                    counter.textContent = child.counter;
+                    counter.style.display = '';
+                } else {
+                    counter.style.display = 'none';
+                }
+                cli.appendChild(counter);
+                cli.style.position = 'relative';
                 if (selectedId === child.id) cli.classList.add('active-child');
                 cli.onclick = (e) => {
                     e.stopPropagation();

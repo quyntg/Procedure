@@ -2,10 +2,8 @@ function doGet(e) {
 	const action = e.parameter.action;
 	let result;
 
-	if (action === "login") {
-		result = JSON.stringify({
-			error: "Vui lòng sử dụng POST để đăng nhập."
-		});
+	if (action === "getProceduresWithCounter") {
+		result = JSON.stringify(getProceduresWithCounter());
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -78,4 +76,42 @@ function login(username, password) {
 		success: false,
 		message: 'Tên đăng nhập hoặc mật khẩu không đúng.'
 	};
+}
+
+// Lấy danh sách procedures kèm counter từ sheet procedure
+function getProceduresWithCounter() {
+  var procedureSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('procedures');
+  var counterSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('counter');
+  if (!procedureSheet) {
+      return { success: false, message: 'Sheet procedure không tồn tại.' };
+  }
+  if (!counterSheet) {
+      return { success: false, message: 'Sheet counter không tồn tại.' };
+  }
+  var procedures = procedureSheet.getDataRange().getValues();
+  var counters = counterSheet.getDataRange().getValues();
+  var procedureHeaders = procedures[0];
+  var counterHeaders = counters[0];
+  var result = [];
+	const procedureSheetIdx = procedureHeaders.indexOf('id');
+	const counterSheetProcedureIdx = counterHeaders.indexOf('procedureId');
+	const stepIdx = counterHeaders.indexOf('stepId');
+	const counterIdx = counterHeaders.indexOf('counter');
+	
+  for (var i = 1; i < procedures.length; i++) {
+    var row = {};
+    for (var j = 0; j < procedureHeaders.length; j++) {
+      row[procedureHeaders[j]] = procedures[i][j];
+    }
+    var steps = {};
+    for (var k = 1; k < counters.length; k++) {
+      if (counters[k][counterSheetProcedureIdx] == procedures[i][procedureSheetIdx]) {
+        steps[counters[k][stepIdx]] = counters[k][counterIdx];	
+      }
+    }
+    row['steps'] = steps;
+    result.push(row);
+  }
+  Logger.log(result)
+  return result;
 }

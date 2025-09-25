@@ -747,3 +747,23 @@ h2 {
     }
 }
 
+.li-counter {
+    position: absolute;
+    right: 1.2em;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f1f5f9;
+    color: #0284c7;
+    font-size: 0.95em;
+    font-weight: 600;
+    border-radius: 1em;
+    padding: 0.1em 0.7em;
+    min-width: 1.8em;
+    text-align: center;
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(14,165,233,0.08);
+}
+.parent.procedure-parent {
+    position: relative;
+}
+

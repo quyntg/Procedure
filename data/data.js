@@ -2,17 +2,17 @@ const ggApiUrl = 'https://script.google.com/macros/s/AKfycbyUWAmBNwl3QUua9JCBk9n
 // Dữ liệu mẫu cho thủ tục (có phân cấp)
 
 const procedures = [
-    { id: 1, name: 'Thủ tục A', children: [
-        { id: 11, name: 'Thủ tục A1' },
-        { id: 12, name: 'Thủ tục A2' }
+    { id: 1, name: 'Thủ tục A', counter: 10, children: [
+        { id: 11, name: 'Thủ tục A1', counter: 5 },
+        { id: 12, name: 'Thủ tục A2', counter: 5 }
     ]},
-    { id: 2, name: 'Thủ tục B', children: [
-        { id: 21, name: 'Thủ tục B1' },
-        { id: 22, name: 'Thủ tục B2' },
-        { id: 23, name: 'Thủ tục B3' }
+    { id: 2, name: 'Thủ tục B', counter: 18, children: [
+        { id: 21, name: 'Thủ tục B1', counter: 6 },
+        { id: 22, name: 'Thủ tục B2', counter: 6 },
+        { id: 23, name: 'Thủ tục B3', counter: 6 }
     ]},
-    { id: 3, name: 'Thủ tục C', children: [
-        { id: 31, name: 'Thủ tục C1' }
+    { id: 3, name: 'Thủ tục C', counter: 5, children: [
+        { id: 31, name: 'Thủ tục C1', counter: 5 }
     ] },
     { id: "procedure", name: 'Quy trình', children: [] }
 ];
