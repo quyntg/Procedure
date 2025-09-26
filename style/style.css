@@ -208,6 +208,11 @@ body {
     margin-left: 1.5rem;
     color: #0284c7;
     font-weight: 500;
+    font-size: 13px;
+}
+
+.procedure-list li {
+    font-size: 15px;
 }
 
 .procedure-list li:hover {
