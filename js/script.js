@@ -3,8 +3,11 @@ const pageSize = 8;
 let currentPage = 1;
 let expanded = {};
 let selectedId = null;
+let selectedIdDossier = null;
+let selectedIdProcedure = null;
 let records = []; // Dữ liệu hiện tại hiển thị trong bảng
 let isMobile = false;
+let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
 
 function loadPage(url, id) {
 	const app = document.getElementById(id);
@@ -61,18 +64,64 @@ function login() {
     });
 }
 
-// home js
+// Lấy procedures từ API Google Apps Script
+async function getProceduresWithCounter() {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=getProceduresWithCounter', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && Array.isArray(data)) {
+            return data;
+        }
+        return [];
+    })
+    .catch(() => [])
+    .finally(() => hideGlobalSpinner());
+}
 
-function renderProcedures() {
-    const ul = document.getElementById('procedureList');
+// home js
+async function loadProcedures() {
+    procedures = await getProceduresWithCounter();
+    renderProcedures();
+}
+
+async function renderProcedures() {
+    const ul = document.getElementById('dossierList');
+    const ul2 = document.getElementById('procedureList');
     if (!ul) return;
     else ul.innerHTML = '';
     procedures.forEach(proc => {
         // Cha
         const li = document.createElement('li');
+        const li2 = document.createElement('li');
         if (!li) return;
         li.className = 'parent procedure-parent';
-        if (selectedId === proc.id) li.classList.add('active-parent');
+
+        li2.className = 'parent procedure-parent';
+        const nameSpan2 = document.createElement('span');
+        nameSpan2.textContent = ' ' + proc.name;
+        li2.appendChild(nameSpan2);
+        // Gán active riêng biệt cho từng list
+        if (selectedIdDossier === proc.id) li.classList.add('active-parent');
+        li2.onclick = (e) => {
+            document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
+            // Nếu đang ở li procedure và bấm sang li gốc khác thì mới load lại API
+            wasProcedure = selectedIdProcedure === 'procedure';
+            selectedIdProcedure = proc.id;
+            li2.classList.add('active-parent');
+            // Nếu là procedure thì collapse hết
+            
+            page('/procedure'); 
+            if (isMobile) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) sidebar.style.display = 'none';
+            } 
+        };
         // Thêm icon thu gọn/mở rộng nếu có con
         if (proc.children && proc.children.length) {
             const icon = document.createElement('span');
@@ -89,57 +138,48 @@ function renderProcedures() {
             li.appendChild(counter);
             li.style.position = 'relative';
             li.onclick = (e) => {
+                document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
                 if (e.target === icon) {
                     // Toggle expand/collapse cho parent này
                     expanded[proc.id] = !expanded[proc.id];
                     renderProcedures();
                     return;
                 }
-                selectedId = proc.id;
-                if (proc.id === "procedure") {
-                    // Nếu là procedure thì collapse hết
-                    expanded = {};
-                    page('/procedure'); 
-                    renderSteps();
-                    selectStep(0);
-                    window.addEventListener('resize', () => {
-                        renderSteps();
-                        selectStep(0);
-                    });
-                } else {
-                    page('/home');
-                    // Expand/collapse parent này, collapse các parent khác
-                    Object.keys(expanded).forEach(k => { 
-                        if (k !== proc.id) expanded[k] = false;
-                    });
-                    expanded[proc.id] = true;
-                    // Gán records bằng filterRecords khi bấm cha
-                    records = filterRecords(sample_records, proc.id, '');
-                    currentPage = 1;
-                    renderRecords();
-                    renderPagination();
-                    renderProcedures();
+                // Chỉ ảnh hưởng selectedIdDossier
+                wasProcedure = selectedIdDossier === 'procedure';
+                selectedIdDossier = proc.id;
+               
+                page('/home');
+                // Expand/collapse parent này, collapse các parent khác
+                Object.keys(expanded).forEach(k => { 
+                    if (k !== proc.id) expanded[k] = false;
+                });
+                expanded[proc.id] = true;
+                // Gán records bằng filterRecords khi bấm cha
+                records = filterRecords(sample_records, proc.id, '');
+                currentPage = 1;
+                renderRecords();
+                renderPagination();
+                // Chỉ load lại API nếu chuyển từ procedure sang li gốc khác
+                if (wasProcedure) {
+                    loadProcedures();
+                    return; // Không gọi renderProcedures phía dưới nữa
                 }
+                renderProcedures();
             };
         } else {
             li.textContent = proc.name;
             li.style.position = 'relative';
-            li.onclick = () => {
-                selectedId = proc.id;
-                if (proc.id === "procedure") {
-                    expanded = {};
-                    page('/procedure');
-                    if (isMobile) {
-                        const sidebar = document.getElementById('sidebar');
-                        if (sidebar) sidebar.style.display = 'none';
-                    }        
-                } else {
-                    page('/home');
-                    renderProcedures();
-                }
+            li.onclick = () => {                
+                document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
+                wasProcedure = selectedIdDossier === 'procedure';
+                selectedIdDossier = proc.id;
+                page('/home');
+                renderProcedures();
             };
         }
-        ul.appendChild(li);
+    ul.appendChild(li);
+    if (ul2) ul2.appendChild(li2);
         // Con
         if (proc.children && proc.children.length && expanded[proc.id]) {
             proc.children.forEach(child => {
@@ -157,10 +197,12 @@ function renderProcedures() {
                 }
                 cli.appendChild(counter);
                 cli.style.position = 'relative';
-                if (selectedId === child.id) cli.classList.add('active-child');
+                if (selectedIdDossier === child.id) cli.classList.add('active-child');
                 cli.onclick = (e) => {
+                    document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
                     e.stopPropagation();
-                    selectedId = child.id;
+                    wasProcedure = selectedIdDossier === 'procedure';
+                    selectedIdDossier = child.id;
                     renderProcedures();
                     // Khi bấm vào child thì thay đổi bảng theo child (lọc theo subType)
                     records = filterRecords(sample_records, '', child.id);
@@ -189,13 +231,13 @@ function renderRecords() {
     const mobile = window.innerWidth <= 600;
     // Lấy tên danh mục đang chọn
     let modernName = '';
-    if (selectedId) {
+    if (selectedIdDossier) {
         // Tìm trong procedures hoặc con
-        let found = procedures.find(p => p.id === selectedId);
+        let found = procedures.find(p => p.id === selectedIdDossier);
         if (!found) {
             for (const p of procedures) {
                 if (p.children) {
-                    found = p.children.find(c => c.id === selectedId);
+                    found = p.children.find(c => c.id === selectedIdDossier);
                     if (found) break;
                 }
             }
@@ -392,6 +434,51 @@ function removeSpinner(btn) {
     if (spinner) spinner.remove();
 }
 
+// Hiển thị spinner toàn màn hình khi gọi API
+function showGlobalSpinner() {
+    if (document.getElementById('global-spinner')) return;
+    const div = document.createElement('div');
+    div.id = 'global-spinner';
+    div.innerHTML = `
+        <div class="global-spinner-backdrop"></div>
+        <div class="global-spinner-svg">
+            ${SPINNER_SVG}
+        </div>
+    `;
+    document.body.appendChild(div);
+}
+
+function hideGlobalSpinner() {
+    const div = document.getElementById('global-spinner');
+    if (div) div.remove();
+}
+
 function goBack() {
     window.history.back();
+}
+
+// Icon đóng/mở cho từng danh sách
+function initHomeToggleIcons() {
+    const dossierList = document.getElementById('dossierList');
+    const procedureList = document.getElementById('procedureList');
+    const toggleDossier = document.getElementById('toggleDossier');
+    const toggleProcedure = document.getElementById('toggleProcedure');
+    const dossierHeader = document.getElementById('dossierHeader');
+    const procedureHeader = document.getElementById('procedureHeader');
+    let openDossier = true;
+    let openProcedure = true;
+    if (toggleDossier && dossierHeader && dossierList) {
+        dossierHeader.onclick = function() {
+            openDossier = !openDossier;
+            dossierList.style.display = openDossier ? '' : 'none';
+            toggleDossier.textContent = openDossier ? '▼' : '▶';
+        };
+    }
+    if (toggleProcedure && procedureHeader && procedureList) {
+        procedureHeader.onclick = function() {
+            openProcedure = !openProcedure;
+            procedureList.style.display = openProcedure ? '' : 'none';
+            toggleProcedure.textContent = openProcedure ? '▼' : '▶';
+        };
+    }
 }

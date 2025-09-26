@@ -46,8 +46,13 @@
 
         page('/home', () => {
             loadPage('html/home.html', 'app').then(() => {
-                document.body.removeAttribute('data-page');     
-                renderProcedures();
+                document.body.removeAttribute('data-page');
+                initHomeToggleIcons();
+                if (wasProcedure) {
+                    loadProcedures();
+                } else {
+                    renderProcedures();
+                }
                 renderRecords();
                 renderPagination();
                  

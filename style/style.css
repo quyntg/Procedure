@@ -510,52 +510,41 @@ h2 {
     pointer-events: none;
 }
 
-@media (max-width: 1024px) {
-    #timeline {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0;
-        padding: 0;
-        border-radius: 0 0 12px 12px;
-        min-width: 0;
-    }
-    .step {
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 12px;
-        border-bottom: 1px solid #bae6fd;
-        margin: 0;
-    }
-    .step:last-child {
-        border-bottom: none;
-    }
-    .step-circle {
-        margin: 0 12px 0 0;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    .step-title {
-        text-align: left;
-        font-size: 1rem;
-    }
-    .arrow {
-        display: none;
-    }
-    .details-inline {
-        max-width: 100%;
-        margin: 12px 0 12px 0;
-        border-radius: 8px;
-        box-shadow: none;
-        padding: 16px 12px;
-    }
-    .details {
-        max-width: 100%;
-        margin: 12px;
-        border-radius: 8px;
-        box-shadow: none;
-    }
+#global-spinner {
+    position: fixed;
+    z-index: 9999;
+    left: 0; top: 0; right: 0; bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: all;
+}
+.global-spinner-backdrop {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.18);
+    z-index: 1;
+}
+.global-spinner-svg {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 1.2em;
+    box-shadow: 0 4px 18px rgba(14, 165, 233, 0.13);
+    padding: 2.2em;
+}
+#global-spinner .spinner-svg {
+    width: 3.5em;
+    height: 3.5em;
+    margin: 0;
+    animation: spinner-rotate 0.9s linear infinite;
 }
 
 /* Responsive bổ sung cho home */
@@ -720,12 +709,6 @@ h2 {
         margin: 12px;
         border-radius: 8px;
         box-shadow: none;
-    }
-    .action-btn {
-        font-size: 0.85rem;
-        padding: 0.22rem 0.6rem;
-        min-width: 48px;
-        border-radius: 0.4rem;
     }
 }
 

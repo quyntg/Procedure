@@ -14,9 +14,19 @@
                 <span style="margin-top: 5px;">&#9776;</span>
             </div>
             <aside class="sidebar modern-sidebar" id="sidebar">
-                <h3><span class="icon-list">📋</span> Thủ tục</h3>
-                <ul class="procedure-list" id="procedureList">
+                <h3 style="display: flex; align-items: center; gap: 6px; cursor: pointer;" id="dossierHeader">
+                    <span class="icon-list">📋</span> Hồ sơ
+                    <span id="toggleDossier" style="cursor: pointer; font-size: 1.2em; user-select: none;">▼</span>
+                </h3>
+                <ul class="procedure-list" id="dossierList">
                     <!-- Danh sách thủ tục sẽ được render ở đây -->
+                </ul>
+                <h3 style="display: flex; align-items: center; gap: 6px; cursor: pointer;" id="procedureHeader">
+                    <span class="icon-list">🛠️</span> Quy trình
+                    <span id="toggleProcedure" style="cursor: pointer; font-size: 1.2em; user-select: none;">▼</span>
+                </h3>
+                <ul class="procedure-list" id="procedureList">
+                    <!-- Danh sách quy trình sẽ được render ở đây -->
                 </ul>
             </aside>
             <main class="content modern-content" id="modern-content">

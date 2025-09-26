@@ -96,6 +96,7 @@ function getProceduresWithCounter() {
 	const procedureSheetIdx = procedureHeaders.indexOf('id');
 	const counterSheetProcedureIdx = counterHeaders.indexOf('procedureId');
 	const stepIdx = counterHeaders.indexOf('stepId');
+	const stepNameIdx = counterHeaders.indexOf('stepName');
 	const counterIdx = counterHeaders.indexOf('counter');
 	
   for (var i = 1; i < procedures.length; i++) {
@@ -103,15 +104,18 @@ function getProceduresWithCounter() {
     for (var j = 0; j < procedureHeaders.length; j++) {
       row[procedureHeaders[j]] = procedures[i][j];
     }
-    var steps = {};
+    var children = [];
     for (var k = 1; k < counters.length; k++) {
       if (counters[k][counterSheetProcedureIdx] == procedures[i][procedureSheetIdx]) {
-        steps[counters[k][stepIdx]] = counters[k][counterIdx];	
+        children.push({
+          id: counters[k][stepIdx],
+          name: counters[k][stepNameIdx],
+          counter: counters[k][counterIdx]
+        });
       }
     }
-    row['steps'] = steps;
+    row['children'] = children;
     result.push(row);
   }
-  Logger.log(result)
   return result;
 }
