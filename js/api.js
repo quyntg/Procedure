@@ -4,6 +4,9 @@ function doGet(e) {
 
 	if (action === "getProceduresWithCounter") {
 		result = JSON.stringify(getProceduresWithCounter());
+	} else if (action === "getStepsByProcedureId") {
+		const procedureId = e.parameter.procedureId;
+		result = JSON.stringify(getStepsByProcedureId(procedureId));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -116,6 +119,25 @@ function getProceduresWithCounter() {
     }
     row['children'] = children;
     result.push(row);
+  }
+  return result;
+}
+
+function getStepsByProcedureId(procedureId) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('steps');
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var result = [];
+  const procedureIdIdx = headers.indexOf('procedureId');
+
+  for (var i = 0; i < data.length; i++) {
+    var row = {};
+    if (data[i][procedureIdIdx] == procedureId) {
+      for (var j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j];
+      }
+      result.push(row);
+    }
   }
   return result;
 }

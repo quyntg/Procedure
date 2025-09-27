@@ -72,12 +72,10 @@
         page('/procedure', () => {
             loadPage('html/procedure.html', 'modern-content').then(() => {
                 document.body.removeAttribute('data-page');
-                renderSteps();
-                selectStep(0);
+                loadSteps(selectedIdProcedure, selectedNameProcedure);
                 window.addEventListener('resize', () => {
-                    renderSteps();
-                    selectStep(0);
-                });  
+                    loadSteps(selectedIdProcedure, selectedNameProcedure);
+                });
             });
         });
 

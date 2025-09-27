@@ -5,6 +5,7 @@ let expanded = {};
 let selectedId = null;
 let selectedIdDossier = null;
 let selectedIdProcedure = null;
+let selectedNameProcedure = "";
 let records = []; // Dữ liệu hiện tại hiển thị trong bảng
 let isMobile = false;
 let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
@@ -84,10 +85,39 @@ async function getProceduresWithCounter() {
     .finally(() => hideGlobalSpinner());
 }
 
+// Lấy steps từ API Google Apps Script
+async function getStepsByProcedureId(procedureId) {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=getStepsByProcedureId&procedureId=' + encodeURIComponent(procedureId), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && Array.isArray(data)) {
+            return data;
+        }
+        return [];
+    })
+    .catch(() => [])
+    .finally(() => {
+        hideGlobalSpinner();
+    });
+}
+
 // home js
 async function loadProcedures() {
     procedures = await getProceduresWithCounter();
     renderProcedures();
+}
+
+async function loadSteps(procedureId, procedureName) {
+    steps = await getStepsByProcedureId(procedureId, procedureName);
+    renderSteps();
+    selectStep(0);
+    document.getElementById('procedure-title').innerText  = "Quy trình " + procedureName;
 }
 
 async function renderProcedures() {
@@ -106,6 +136,7 @@ async function renderProcedures() {
         const nameSpan2 = document.createElement('span');
         nameSpan2.textContent = ' ' + proc.name;
         li2.appendChild(nameSpan2);
+        li2.setAttribute('data-procedure-id', proc.id);
         // Gán active riêng biệt cho từng list
         if (selectedIdDossier === proc.id) li.classList.add('active-parent');
         li2.onclick = (e) => {
@@ -113,6 +144,7 @@ async function renderProcedures() {
             // Nếu đang ở li procedure và bấm sang li gốc khác thì mới load lại API
             wasProcedure = selectedIdProcedure === 'procedure';
             selectedIdProcedure = proc.id;
+            selectedNameProcedure = proc.name;
             li2.classList.add('active-parent');
             // Nếu là procedure thì collapse hết
             
@@ -313,12 +345,20 @@ function renderSteps() {
     const timeline = document.getElementById("timeline");
     if (!timeline) return;
     timeline.innerHTML = '';
+    
+    if (!steps || !steps.length) {
+        timeline.style.display = 'block';
+        timeline.innerHTML = '<div style="text-align: center; padding: 32px 0; color: #0ea5e9; font-size: 1.1rem;">Chưa có dữ liệu cho quy trình này.</div>';
+        return;
+    } else {
+        timeline.style.display = 'flex';
+    }
     steps.forEach((s, i) => {
         const btn = document.createElement("div");
         btn.className = "step";
         btn.innerHTML = `
-            <div class="step-circle">${s.id}</div>
-            <div class="step-title">${s.title}</div>`;
+            <div class="step-circle">B${i + 1}</div>
+            <div class="step-title">${s.name}</div>`;
         btn.addEventListener("click", () => selectStep(i));
         timeline.appendChild(btn);
         // Desktop mới có mũi tên
@@ -338,6 +378,7 @@ function selectStep(index) {
     document.querySelectorAll(".step").forEach((el, i) => {
         el.classList.toggle("active", i === index);
     });
+    
     // Responsive: mobile sẽ xổ details riêng dưới step
     if (window.innerWidth <= 1024) {
         // Xóa details-inline cũ
@@ -346,8 +387,8 @@ function selectStep(index) {
         const detailsDiv = document.createElement('div');
         detailsDiv.className = 'details details-inline';
         detailsDiv.innerHTML = `
-            <h3>${steps[index].id} - ${steps[index].title}</h3>
-            <p>${steps[index].desc}</p>`;
+            <h3>B${index + 1} - ${steps[index].name}</h3>
+            <p>${steps[index].description}</p>`;
         // Chèn sau step đang chọn
         const stepEls = document.querySelectorAll('.step');
         if (stepEls[index].nextSibling) {
@@ -358,10 +399,11 @@ function selectStep(index) {
         // Ẩn details global
         details.style.display = 'none';
     } else {
+        if (!steps || !steps.length) return;
         details.style.display = '';
         details.innerHTML = `
-            <h3>${steps[index].id} - ${steps[index].title}</h3>
-            <p>${steps[index].desc}</p>`;
+            <h3>B${index + 1} - ${steps[index].name}</h3>
+            <p>${steps[index].description}</p>`;
         // Xóa details-inline nếu có
         document.querySelectorAll('.details-inline').forEach(e => e.remove());
     }

@@ -48,42 +48,42 @@ const childRecords = {
     ]
 };
 
-const steps = [{
+let steps = [{
     id: "B1",
-    title: "Tiếp nhận",
-    desc: "Nhận yêu cầu, ghi nhận thông tin cơ bản."
+    name: "Tiếp nhận",
+    description: "Nhận yêu cầu, ghi nhận thông tin cơ bản."
 }, {
     id: "B2",
-    title: "Chuẩn bị",
-    desc: "Chuẩn bị tài liệu, công cụ và nhân sự."
+    name: "Chuẩn bị",
+    description: "Chuẩn bị tài liệu, công cụ và nhân sự."
 }, {
     id: "B3",
-    title: "Xử lý",
-    desc: "Thực hiện các bước xử lý chính."
+    name: "Xử lý",
+    description: "Thực hiện các bước xử lý chính."
 }, {
     id: "B4",
-    title: "Kiểm tra",
-    desc: "Kiểm thử, review kết quả."
+    name: "Kiểm tra",
+    description: "Kiểm thử, review kết quả."
 }, {
     id: "B5",
-    title: "Duyệt",
-    desc: "Duyệt nội dung/phiên bản để phát hành."
+    name: "Duyệt",
+    description: "Duyệt nội dung/phiên bản để phát hành."
 }, {
     id: "B6",
-    title: "Hoàn thiện",
-    desc: "Hoàn thiện các công việc còn lại."
+    name: "Hoàn thiện",
+    description: "Hoàn thiện các công việc còn lại."
 }, {
     id: "B7",
-    title: "Phát hành",
-    desc: "Đưa sản phẩm/dữ liệu vào môi trường thật."
+    name: "Phát hành",
+    description: "Đưa sản phẩm/dữ liệu vào môi trường thật."
 }, {
     id: "B8",
-    title: "Theo dõi",
-    desc: "Theo dõi hoạt động, thu thập phản hồi."
+    name: "Theo dõi",
+    description: "Theo dõi hoạt động, thu thập phản hồi."
 }, {
     id: "B9",
-    title: "Báo cáo",
-    desc: "Tổng kết và lập báo cáo hoàn tất."
+    name: "Báo cáo",
+    description: "Tổng kết và lập báo cáo hoàn tất."
 }, ];
 
 // Spinner SVG template
