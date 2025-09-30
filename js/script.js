@@ -6,7 +6,7 @@ let selectedId = null;
 let selectedIdDossier = null;
 let selectedIdProcedure = null;
 let selectedNameProcedure = "";
-let records = []; // Dữ liệu hiện tại hiển thị trong bảng
+let dossiers = []; // Dữ liệu hiện tại hiển thị trong bảng
 let isMobile = false;
 let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
 
@@ -120,6 +120,13 @@ async function loadSteps(procedureId, procedureName) {
     document.getElementById('procedure-title').innerText  = "Quy trình " + procedureName;
 }
 
+async function loadDossiers(procedure, status) {
+    dossiers = await getDossiers(procedure, status);
+    currentPage = 1;
+    renderDossiers();
+    renderPagination();
+}
+
 async function renderProcedures() {
     const ul = document.getElementById('dossierList');
     const ul2 = document.getElementById('procedureList');
@@ -154,21 +161,21 @@ async function renderProcedures() {
                 if (sidebar) sidebar.style.display = 'none';
             } 
         };
+        const icon = document.createElement('span');
+        icon.className = 'toggle-icon';
+        icon.textContent = expanded[proc.id] ? '▼' : '▶';
+        li.appendChild(icon);
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = ' ' + proc.name;
+        li.appendChild(nameSpan);
+        // Thêm counter góc phải
+        const counter = document.createElement('span');
+        counter.className = 'li-counter';
+        counter.textContent = proc.counter !== undefined ? proc.counter : '';
+        li.appendChild(counter);
+        li.style.position = 'relative';
         // Thêm icon thu gọn/mở rộng nếu có con
         if (proc.children && proc.children.length) {
-            const icon = document.createElement('span');
-            icon.className = 'toggle-icon';
-            icon.textContent = expanded[proc.id] ? '▼' : '▶';
-            li.appendChild(icon);
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = ' ' + proc.name;
-            li.appendChild(nameSpan);
-            // Thêm counter góc phải
-            const counter = document.createElement('span');
-            counter.className = 'li-counter';
-            counter.textContent = proc.counter !== undefined ? proc.counter : '';
-            li.appendChild(counter);
-            li.style.position = 'relative';
             li.onclick = (e) => {
                 document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
                 if (e.target === icon) {
@@ -187,11 +194,8 @@ async function renderProcedures() {
                     if (k !== proc.id) expanded[k] = false;
                 });
                 expanded[proc.id] = true;
-                // Gán records bằng filterRecords khi bấm cha
-                records = filterRecords(sample_records, proc.id, '');
-                currentPage = 1;
-                renderRecords();
-                renderPagination();
+                // Gán dossiers bằng loadDossiers khi bấm cha
+                loadDossiers(proc.id, '');
                 // Chỉ load lại API nếu chuyển từ procedure sang li gốc khác
                 if (wasProcedure) {
                     loadProcedures();
@@ -200,8 +204,6 @@ async function renderProcedures() {
                 renderProcedures();
             };
         } else {
-            li.textContent = proc.name;
-            li.style.position = 'relative';
             li.onclick = () => {                
                 document.querySelectorAll('.procedure-parent, .procedure-child').forEach(el => el.classList.remove('active-parent', 'active-child'));
                 wasProcedure = selectedIdDossier === 'procedure';
@@ -237,11 +239,8 @@ async function renderProcedures() {
                     selectedIdDossier = child.id;
                     renderProcedures();
                     // Khi bấm vào child thì thay đổi bảng theo child (lọc theo subType)
-                    records = filterRecords(sample_records, '', child.id);
-                    currentPage = 1;
+                    loadDossiers('', child.id);
                     page('/home');
-                    renderRecords();
-                    renderPagination();
                     // Nếu là mobile thì ẩn sidebar
                     if (isMobile) {
                         const sidebar = document.getElementById('sidebar');
@@ -254,8 +253,8 @@ async function renderProcedures() {
     });
 }           
 
-function renderRecords() {
-    const tbody = document.querySelector('#recordsTable tbody');
+function renderDossiers() {
+    const tbody = document.querySelector('#dossiersTable tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
     const start = (currentPage-1)*pageSize;
@@ -279,23 +278,24 @@ function renderRecords() {
     // Gán tên danh mục vào .modern-name nếu có
     const modernNameEl = document.getElementById('modern-name');
     if (modernNameEl) modernNameEl.textContent = modernName;
-    records.slice(start, end).forEach(r => {
+    
+    dossiers.slice(start, end).forEach(r => {
         const tr = document.createElement('tr');
         // Định dạng ngày dd/mm/yyyy
-        let dateStr = r.date;
-        if (dateStr && dateStr.includes('-')) {
-            const [y, m, d] = dateStr.split('-');
-            dateStr = `${d}/${m}/${y}`;
-        }
+        // let dateStr = r.date;
+        // if (dateStr && dateStr.includes('-')) {
+        //     const [y, m, d] = dateStr.split('-');
+        //     dateStr = `${d}/${m}/${y}`;
+        // }
         if (mobile) {
             tr.innerHTML = `<td>${r.id}</td><td>${r.name}</td><td><button class='action-btn' onclick='viewRecord("${r.id}")'>Xem</button></td>`;
         } else {
-            tr.innerHTML = `<td>${r.id}</td><td>${r.name}</td><td>${r.customer}</td><td>${r.status}</td><td>${dateStr}</td><td><button class='action-btn' onclick='viewRecord("${r.id}")'>Xem</button></td>`;
+            tr.innerHTML = `<td>${r.id}</td><td>${r.name}</td><td>${r.customer}</td><td>${r.status}</td><td>${r.createDate}</td><td><button class='action-btn' onclick='viewRecord("${r.id}")'>Xem</button></td>`;
         }
         tbody.appendChild(tr);
     });
     // Ẩn/hiện cột theo mobile
-    const table = document.getElementById('recordsTable');
+    const table = document.getElementById('dossiersTable');
     if (table) {
         const ths = table.querySelectorAll('th');
         ths.forEach((th, idx) => {
@@ -313,7 +313,7 @@ function renderRecords() {
 }
 
 function renderPagination() {
-    const totalPages = Math.ceil(records.length / pageSize);
+    const totalPages = Math.ceil(dossiers.length / pageSize);
     const pagDiv = document.getElementById('pagination');
     if (!pagDiv) return;
     pagDiv.innerHTML = '';
@@ -323,7 +323,7 @@ function renderPagination() {
         if (i === currentPage) btn.classList.add('active');
         btn.onclick = () => { 
             currentPage = i; 
-            renderRecords(); 
+            renderDossiers(); 
             renderPagination(); 
         };
         pagDiv.appendChild(btn);
@@ -331,12 +331,24 @@ function renderPagination() {
 }
 // end home js
 
-function filterRecords(records, type, subType) {
-    if (!type) return records.filter(r => {
-        return r.subType == subType;
-    });
-    if (!subType) return records.filter(r => {
-        return r.type == type;
+async function getDossiers(procedure, status) {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=getDossiers&procedure=' + encodeURIComponent(procedure) + '&status=' + encodeURIComponent(status), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && Array.isArray(data)) {
+            return data;
+        }
+        return [];
+    })
+    .catch(() => [])
+    .finally(() => {
+        hideGlobalSpinner();
     });
 }
 

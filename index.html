@@ -19,7 +19,7 @@
         //     loadPage('html/home.html', 'app').then(() => {
         //         // document.body.setAttribute('data-page', 'login');        
         //         renderProcedures();
-        //         renderRecords();
+        //         renderDossiers();
         //         renderPagination();
                     
         //         document.getElementById('sidebarToggle').onclick = function() {
@@ -53,8 +53,8 @@
                 } else {
                     renderProcedures();
                 }
-                renderRecords();
-                renderPagination();
+                // renderDossiers();
+                // renderPagination();
                  
                 let sidebarToggle = document.getElementById('sidebarToggle');
                 if (sidebarToggle) {
@@ -80,7 +80,7 @@
         });
 
         page('/record', () => {
-            loadPage('html/record.html', 'modern-content').then(() => {
+            loadPage('html/dossier.html', 'modern-content').then(() => {
                 document.body.removeAttribute('data-page');
             });
         });

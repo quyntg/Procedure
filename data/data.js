@@ -18,7 +18,7 @@ let procedures = [
 ];
 
 // Dữ liệu mẫu cho hồ sơ tổng
-const sample_records = Array.from({length: 100}, (_, i) => ({
+const sample_dossiers = Array.from({length: 100}, (_, i) => ({
     id: 'HS' + (i+1).toString().padStart(3, '0'),
     name: 'Hồ sơ ' + (i+1),
     type: ['1', '2', '3'][i%3],
@@ -29,7 +29,7 @@ const sample_records = Array.from({length: 100}, (_, i) => ({
 }));
 
 // Dữ liệu mẫu cho từng child (test)
-const childRecords = {
+const childDossiers = {
     11: [
         {id: 'A1-01', name: 'Hồ sơ A1-01', customer: 'KH A1', status: 'Đang xử lý', date: '2025-09-01'},
         {id: 'A1-02', name: 'Hồ sơ A1-02', customer: 'KH A1', status: 'Chờ duyệt', date: '2025-09-02'}

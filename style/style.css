@@ -66,7 +66,7 @@ body {
     color: #0284c7;
 }
 
-.records-table {
+.dossiers-table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
@@ -75,19 +75,19 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.records-table th, .records-table td {
+.dossiers-table th, .dossiers-table td {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e5e7eb;
     text-align: left;
 }
 
-.records-table th {
+.dossiers-table th {
     background: #f1f5f9;
     color: #333;
     height: 30px;
 }
 
-.records-table tr:last-child td {
+.dossiers-table tr:last-child td {
     border-bottom: none;
 }
 
@@ -602,7 +602,7 @@ h2 {
         gap: 0.5rem;
         align-items: flex-start;
     }
-    .records-table th, .records-table td {
+    .dossiers-table th, .dossiers-table td {
         font-size: 0.95rem;
         padding: 0.5rem 0.4rem;
     }
@@ -610,7 +610,7 @@ h2 {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
     }
-    .records-table, .modern-table {
+    .dossiers-table, .modern-table {
         min-width: 600px;
     }
 }
@@ -649,13 +649,13 @@ h2 {
         display: block;
         margin-top: 50px;
     }
-    .modern-table, .records-table {
+    .modern-table, .dossiers-table {
         min-width: unset !important;
         width: 100% !important;
         table-layout: fixed;
     }
     .modern-table th, .modern-table td,
-    .records-table th, .records-table td {
+    .dossiers-table th, .dossiers-table td {
         font-size: 0.98rem;
         padding: 0.5rem 0.3rem;
         text-align: left;
@@ -663,8 +663,8 @@ h2 {
         white-space: normal;
     }
     /* Chỉ ẩn các cột từ thứ 3 đến cột áp chót, giữ lại cột Xem cuối cùng */
-    .records-table th:nth-child(n+3):not(:last-child),
-    .records-table td:nth-child(n+3):not(:last-child) {
+    .dossiers-table th:nth-child(n+3):not(:last-child),
+    .dossiers-table td:nth-child(n+3):not(:last-child) {
         display: none !important;
     }
     .modern-table th:nth-child(n+3):not(:last-child),
@@ -726,7 +726,7 @@ h2 {
         font-size: 0.9rem;
         padding: 0.4rem 0.6rem;
     }
-    .records-table th, .records-table td {
+    .dossiers-table th, .dossiers-table td {
         font-size: 0.9rem;
         padding: 0.35rem 0.2rem;
         text-align: center;

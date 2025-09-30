@@ -7,6 +7,10 @@ function doGet(e) {
 	} else if (action === "getStepsByProcedureId") {
 		const procedureId = e.parameter.procedureId;
 		result = JSON.stringify(getStepsByProcedureId(procedureId));
+	} else if (action === "getDossiers") {
+		const procedure = e.parameter.procedure;
+		const status = e.parameter.status;
+		result = JSON.stringify(getDossiers(procedure, status));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -113,7 +117,7 @@ function getProceduresWithCounter() {
         children.push({
           id: counters[k][stepIdx],
           name: counters[k][stepNameIdx],
-          counter: counters[k][counterIdx]
+          counter: counters[k][counterIdx] || 0
         });
       }
     }
@@ -133,6 +137,32 @@ function getStepsByProcedureId(procedureId) {
   for (var i = 0; i < data.length; i++) {
     var row = {};
     if (data[i][procedureIdIdx] == procedureId) {
+      for (var j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j];
+      }
+      result.push(row);
+    }
+  }
+  return result;
+}
+
+function getDossiers(procedure, status) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  if (!sheet) {
+    return { success: false, message: 'Sheet dossiers không tồn tại.' };
+  }
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var procedureIdx = headers.indexOf('procedure');
+  var statusIdx = headers.indexOf('status');
+  var result = [];
+
+  for (var i = 0; i < data.length; i++) {
+    if (
+      (procedure === '' || data[i][procedureIdx] == procedure) &&
+      (status === '' || data[i][statusIdx] == status)
+    ) {
+      var row = {};
       for (var j = 0; j < headers.length; j++) {
         row[headers[j]] = data[i][j];
       }
