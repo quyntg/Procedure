@@ -79,9 +79,13 @@
             });
         });
 
-        page('/record', () => {
+        page('/dossier', () => {
             loadPage('html/dossier.html', 'modern-content').then(() => {
                 document.body.removeAttribute('data-page');
+                const dossierId = sessionStorage.getItem('dossierId');
+                if (dossierId) {
+                    loadDossierDetail(dossierId);
+                }
             });
         });
         

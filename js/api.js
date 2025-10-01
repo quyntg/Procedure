@@ -11,6 +11,9 @@ function doGet(e) {
 		const procedure = e.parameter.procedure;
 		const status = e.parameter.status;
 		result = JSON.stringify(getDossiers(procedure, status));
+	} else if (action === "getDossierDetail") {
+		const id = e.parameter.id;
+		result = JSON.stringify(getDossierDetail(id));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -170,4 +173,24 @@ function getDossiers(procedure, status) {
     }
   }
   return result;
+}
+
+function getDossierDetail(id) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  if (!sheet) {
+    return { success: false, message: 'Sheet dossiers không tồn tại.' };
+  }
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var idIdx = headers.indexOf('id');
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][idIdx]) === String(id)) {
+      var row = {};
+      for (var j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j];
+      }
+      return row;
+    }
+  }
+  return { success: false, message: 'Không tìm thấy hồ sơ với id này.' };
 }

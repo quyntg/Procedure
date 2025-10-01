@@ -24,7 +24,7 @@ function loadPage(url, id) {
 
 // Nếu F5 ở trang /procedure thì chuyển về /home
 window.addEventListener('DOMContentLoaded', function() {
-    if (location.href.endsWith('/procedure') || location.href.includes('/record')) {
+    if (location.href.endsWith('/procedure') || location.href.includes('/dossier')) {
         page('/home');
     }
 });
@@ -125,6 +125,11 @@ async function loadDossiers(procedure, status) {
     currentPage = 1;
     renderDossiers();
     renderPagination();
+}
+
+async function loadDossierDetail(id) {
+    let dossierDetail = await getDossierDetail(id);
+    sessionStorage.setItem('dossierDetail', JSON.stringify(dossierDetail));
 }
 
 async function renderProcedures() {
@@ -352,6 +357,28 @@ async function getDossiers(procedure, status) {
     });
 }
 
+async function getDossierDetail(id) {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=getDossierDetail&id=' + encodeURIComponent(id), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && typeof data === 'object') {
+            return data;
+        }
+        return {};
+    })
+    .catch(() => {})
+    .finally(() => {
+        initDossierDetail();
+        hideGlobalSpinner();
+    });
+}
+
 // --- Procedure page logic ---
 function renderSteps() {
     const timeline = document.getElementById("timeline");
@@ -440,7 +467,8 @@ function handleSidebarMobile() {
 }
 
 function viewRecord(id) {
-    page('/record?id=' + id);
+    sessionStorage.setItem('dossierId', id);
+    page('/dossier?id=' + id);
 }
 
 function showModal(type) {
@@ -535,4 +563,14 @@ function initHomeToggleIcons() {
             toggleProcedure.textContent = openProcedure ? '▼' : '▶';
         };
     }
+}
+
+function initDossierDetail() {
+    let dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
+    console.log(dossierDetail);
+    document.getElementById('record-id').textContent = dossierDetail.id || '';
+    document.getElementById('record-name').textContent = dossierDetail.name || '';
+    document.getElementById('record-customer').textContent = dossierDetail.customer || '';
+    document.getElementById('record-createDate').textContent = dossierDetail.createDate || '';
+    document.getElementById('record-modifiedDate').textContent = dossierDetail.modifiedDate || '';
 }
