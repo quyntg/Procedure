@@ -7,23 +7,9 @@
         <div class="info-row"><span class="info-label">Tên hồ sơ:</span> <span id="record-name"></span></div>
         <div class="info-row"><span class="info-label">Khách hàng:</span> <span id="record-customer"></span></div>
     </div>
-    <form class="record-form">
-        <div class="form-row">
-            <label>Ghi chú:</label>
-            <input type="text" id="note" placeholder="Nhập ghi chú...">
-        </div>
-        <div class="form-row">
-            <label>Ngày cập nhật:</label>
-            <input type="date" id="update-date">
-        </div>
-        <div class="form-row">
-            <label>Tệp đính kèm:</label>
-            <input type="file" id="attachment">
-        </div>
-    </form>
+    <div id="record-files"></div>
     <div class="record-actions">
-        <button class="action-btn preview-btn" onclick="showModal('confirm')">Xem thử</button>
-        <button class="action-btn status-btn" onclick="showModal('cancel')">Chuyển trạng thái</button>
+        <button class="action-btn status-btn" onclick="showModal('next', '')">Chuyển trạng thái</button>
         <button class="action-btn back-btn" onclick="goBack()">Quay lại</button>
     </div>
 </div>

@@ -28,16 +28,20 @@ function doPost(e) {
 	const action = e.parameter.action;
 	let result;
 
-	if (action === "login") {
-		const username = e.parameter.username;
-		const password = e.parameter.password;
-		const loginResult = login(username, password);
-		result = JSON.stringify(loginResult);
-	} else {
-		result = JSON.stringify({
-			error: "Invalid action"
-		});
-	}
+  const actions = {
+    login: handleLogin,
+    upload: handleUploadRequest,
+    listFolders: handleListFolders
+    // thêm các action khác ở đây
+  };
+
+  if (actions[action]) {
+    // Gọi function xử lý và stringify kết quả
+    result = JSON.stringify(actions[action](e));
+  } else {
+    result = JSON.stringify({ error: "Invalid action" });
+  }
+
 	return ContentService
 		.createTextOutput(result)
 		.setMimeType(ContentService.MimeType.JSON);
@@ -49,6 +53,33 @@ function doOptions(e) {
 		.setHeader("Access-Control-Allow-Origin", "*")
 		.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+function handleLogin(e) {
+  const username = e.parameter.username;
+  const password = e.parameter.password;
+  return login(username, password); // hàm login của bạn
+}
+
+// xử lý upload
+function handleUploadRequest(e) {
+  try {
+    const fileData = e.parameter.fileData;
+    const fileName = e.parameter.fileName || "unnamed";
+    const mimeType = e.parameter.mimeType || "application/octet-stream";
+    const folderId = e.parameter.folderId || "";
+
+    const file = saveFileToDrive(fileData, fileName, mimeType, folderId);
+
+    return {
+      success: true,
+      id: file.getId(),
+      name: file.getName(),
+      url: file.getUrl()
+    };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
 function login(username, password) {
@@ -176,21 +207,88 @@ function getDossiers(procedure, status) {
 }
 
 function getDossierDetail(id) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
-  if (!sheet) {
-    return { success: false, message: 'Sheet dossiers không tồn tại.' };
-  }
-  var data = sheet.getDataRange().getValues();
-  var headers = data.shift();
-  var idIdx = headers.indexOf('id');
-  for (var i = 0; i < data.length; i++) {
-    if (String(data[i][idIdx]) === String(id)) {
+  id = "D250000001"
+  var dossiersSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  var stepsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('steps');
+  var filesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('files');
+
+  var dossiersData = dossiersSheet.getDataRange().getValues();
+  var stepsData = stepsSheet.getDataRange().getValues();
+  var filesData = filesSheet.getDataRange().getValues();
+  
+  var dossiersHeaders = dossiersData.shift();
+  var stepsHeaders = stepsData.shift();
+  var filesHeaders = filesData.shift();
+
+  var idIdx = dossiersHeaders.indexOf('id');
+  var statusIdx = dossiersHeaders.indexOf('status');
+  var stepIdx = stepsHeaders.indexOf('id');
+  var filesIdx = stepsHeaders.indexOf('files');
+  var fileIdx = filesHeaders.indexOf('id');
+
+  for (var i = 0; i < dossiersData.length; i++) {
+    if (String(dossiersData[i][idIdx]) === String(id)) {
       var row = {};
-      for (var j = 0; j < headers.length; j++) {
-        row[headers[j]] = data[i][j];
+      for (var j = 0; j < dossiersHeaders.length; j++) {
+        row[dossiersHeaders[j]] = dossiersData[i][j];
       }
+      var files = [];
+
+      for (var k = 0; k < stepsData.length; k++) {
+        if (stepsData[k][stepIdx] === dossiersData[i][statusIdx]) {
+          var filesString = stepsData[k][filesIdx] || ''; 
+          var filesArr = filesString.split(',').map(f => f.trim()).filter(f => f);
+
+          for (var f = 0; f < filesArr.length; f++) {
+            for (var h = 0; h < filesData.length; h++) {
+              if (filesArr[f] === filesData[h][fileIdx]) {
+                var fileObj = {};
+                for (var m = 0; m < filesHeaders.length; m++) {
+                  if (filesHeaders[m] === 'form') {
+                    fileObj[filesHeaders[m]] = JSON.parse(JSON.stringify(filesData[h][m]));
+                  } else {
+                    fileObj[filesHeaders[m]] = filesData[h][m];
+                  }
+                }
+                files.push(fileObj);
+              }
+            }
+          }
+        }
+      }
+      row['files'] = files;
       return row;
     }
   }
   return { success: false, message: 'Không tìm thấy hồ sơ với id này.' };
+}
+
+function handleListFolders(e) {
+  const folders = [];
+  const it = DriveApp.getFolders();
+  while (it.hasNext() && folders.length < 20) {
+    const f = it.next();
+    folders.push({ id: f.getId(), name: f.getName() });
+  }
+  return ContentService.createTextOutput(
+    JSON.stringify({ success: true, folders })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
+function saveFileToDrive(base64Data, fileName, mimeType, folderId) {
+  if (base64Data.indexOf('base64,') !== -1) {
+    base64Data = base64Data.split('base64,')[1];
+  }
+
+  const decoded = Utilities.base64Decode(base64Data);
+  const blob = Utilities.newBlob(decoded, mimeType, fileName);
+
+  let file;
+  if (folderId) {
+    const folder = DriveApp.getFolderById(folderId);
+    file = folder.createFile(blob);
+  } else {
+    file = DriveApp.createFile(blob);
+  }
+  return file;
 }

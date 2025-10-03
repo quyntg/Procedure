@@ -1,3 +1,19 @@
+/* Nút cộng/trừ cho bảng động */
+.table-btn {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: 1px solid #bae6fd;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    font-size: 1.2rem;
+    margin: 2px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.table-btn:hover {
+    background: #bae6fd;
+}
 * {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -707,6 +723,97 @@ h2 {
 }
 .parent.procedure-parent {
     position: relative;
+}
+
+/* Style cho phần file */
+#record-files {
+    margin-bottom: 1.5rem;
+}
+.record-file {
+    border: 1px solid #bae6fd;
+    border-radius: 0.7rem;
+    margin-bottom: 0.7rem;
+    background: #f0f9ff;
+}
+.record-file-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 1.2rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: #0369a1;
+}
+.file-toggle-icon {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.record-file-form {
+    padding: 1rem 1.2rem 1.2rem 1.2rem;
+    background: #fff;
+    border-top: 1px solid #bae6fd;
+    border-radius: 0 0 0.7rem 0.7rem;
+}
+
+.legend-label {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+/* Select trong form động */
+.form-row select {
+    padding: 0.6rem 1rem;
+    border: 1px solid #bae6fd;
+    border-radius: 0.6rem;
+    font-size: 1rem;
+    background: #fff;
+    color: #0369a1;
+    outline: none;
+    transition: border 0.2s;
+}
+.form-row select:focus {
+    border: 1.5px solid #0ea5e9;
+}
+
+/* Bảng động trong form */
+.dynamic-table {
+    width: 100%;
+    max-width: 100%;   /* 🚀 không vượt quá cha */
+    border-collapse: collapse;
+    background: #f8fafc;
+    border-radius: 0.7rem;
+    table-layout: fixed; /* ép cột chia đều, không bị giãn vô hạn */
+    margin-top: 0.5rem;
+    word-wrap: break-word;
+}
+
+.dynamic-table th, .dynamic-table td {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #bae6fd;
+    font-size: 1rem;
+    text-align: left;
+}
+.dynamic-table th {
+    background: #e0f2fe;
+    color: #0284c7;
+    font-weight: 600;
+    text-align: center;
+}
+.dynamic-table input {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.dynamic-table tr:last-child td {
+    border-bottom: 1px solid #bae6fd;
+}
+
+/* Responsive cho bảng động */
+@media (max-width: 700px) {
+    .dynamic-table th, .dynamic-table td {
+        font-size: 0.95rem;
+        padding: 0.4rem 0.3rem;
+    }
 }
 
 @media (max-width: 900px) {

@@ -9,6 +9,7 @@ let selectedNameProcedure = "";
 let dossiers = []; // Dữ liệu hiện tại hiển thị trong bảng
 let isMobile = false;
 let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
+let recordFiles = []; // Mảng lưu trữ các file đã upload
 
 function loadPage(url, id) {
 	const app = document.getElementById(id);
@@ -129,6 +130,7 @@ async function loadDossiers(procedure, status) {
 
 async function loadDossierDetail(id) {
     let dossierDetail = await getDossierDetail(id);
+    console.log(dossierDetail);
     sessionStorage.setItem('dossierDetail', JSON.stringify(dossierDetail));
 }
 
@@ -368,13 +370,17 @@ async function getDossierDetail(id) {
     .then(res => res.json())
     .then(data => {
         if (data && typeof data === 'object') {
+            sessionStorage.setItem('dossierDetail', JSON.stringify(data));
             return data;
         }
+        initDossierDetail({});
         return {};
     })
-    .catch(() => {})
-    .finally(() => {
-        initDossierDetail();
+    .catch(() => {
+        initDossierDetail({});
+    })
+    .finally(data => {
+        initDossierDetail(data);
         hideGlobalSpinner();
     });
 }
@@ -471,19 +477,23 @@ function viewRecord(id) {
     page('/dossier?id=' + id);
 }
 
-function showModal(type) {
+function showModal(type, file) {
     const modal = document.getElementById('modal-confirm');
     const msg = document.getElementById('modal-message');
-    if (type === 'confirm') {
-        msg.textContent = 'Bạn có chắc chắn muốn xem thử hồ sơ này?';
-    } else if (type === 'cancel') {
+    if (type === 'save') {
+        msg.textContent = 'Bạn có chắc chắn muốn lưu file này?';
+    } else if (type === 'preview') {
+        msg.textContent = 'Bạn có chắc chắn muốn xem thử file này?';
+    } else if (type === 'next') {
         msg.textContent = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
     }
     let btnConfirm = document.getElementById('btn-confirm');
     let btnCancel = document.getElementById('btn-cancel');
     let spin = document.getElementById('spin-confirm');
+
     spin.style.display = 'none';
     modal.style.display = 'flex';
+
     btnConfirm.onclick = function() {
         // Hiệu ứng xoay
         spin.classList.add('spinning');
@@ -492,9 +502,10 @@ function showModal(type) {
             spin.classList.remove('spinning');
             spin.style.display = 'none';
             modal.style.display = 'none';
-            alert(type === 'confirm' ? 'Đã xem thử!' : type === 'cancel' ? 'Đã chuyển trạng thái!' : '');
+            alert(type === 'save' ? 'Đã lưu file!' : type === 'preview' ? 'Đã xem thử file!' : type === 'next' ? 'Đã chuyển trạng thái!' : '');
         }, 5000);
     };
+
     btnCancel.onclick = function() {
         modal.style.display = 'none';
     };
@@ -565,12 +576,173 @@ function initHomeToggleIcons() {
     }
 }
 
-function initDossierDetail() {
-    let dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
-    console.log(dossierDetail);
+function initDossierDetail(dossierDetail) {
+    // Nếu không truyền vào thì fallback lấy từ sessionStorage (giữ tương thích)
+    if (!dossierDetail) {
+        dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
+    }
     document.getElementById('record-id').textContent = dossierDetail.id || '';
     document.getElementById('record-name').textContent = dossierDetail.name || '';
     document.getElementById('record-customer').textContent = dossierDetail.customer || '';
     document.getElementById('record-createDate').textContent = dossierDetail.createDate || '';
     document.getElementById('record-modifiedDate').textContent = dossierDetail.modifiedDate || '';
+
+    renderRecordFiles(dossierDetail.files || []);
+}
+
+// Đóng/mở form nhập liệu cho từng file
+function toggleFileForm(fileId) {
+    const form = document.getElementById(`file-form-${fileId}`);
+    const icon = document.getElementById(`toggle-icon-${fileId}`);
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        icon.textContent = '▲';
+    } else {
+        form.style.display = 'none';
+        icon.textContent = '▼';
+    }
+}
+
+function renderRecordFiles(files) {
+    const container = document.getElementById('record-files');
+    container.innerHTML = '';
+    files.forEach((file, index) => {
+        const fileDiv = document.createElement('div');
+        let html = '';
+        fileDiv.className = 'record-file';
+        html += `
+            <div class="record-file-header" onclick="toggleFileForm('${file.id}')">
+                <span class="file-name">${file.name}</span>
+                <span class="file-toggle-icon" id="toggle-icon-${file.id}">▼</span>
+            </div>`;
+        html += 
+            `<div class="record-file-form" id="file-form-${file.id}" style="display: none;">`;
+        html += generateForm(JSON.parse(file.form), index);
+        html += `
+            <div class="record-actions">
+                <button class="action-btn" onclick="showModal('save', '${file.id}')">Ghi lại</button>
+                <button class="action-btn" onclick="showModal('preview', '${file.id}')">Xem thử</button>
+            </div>
+        </div>`;
+        fileDiv.innerHTML = html;
+        container.appendChild(fileDiv);
+    });
+}
+
+function numberToVietnamese(amount) {
+    if (typeof amount !== "number") amount = parseInt(amount, 10);
+    if (isNaN(amount)) return "";
+
+    const digits = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
+    const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+
+    function readThreeDigits(num) {
+        let hundred = Math.floor(num / 100);
+        let ten = Math.floor((num % 100) / 10);
+        let unit = num % 10;
+        let result = "";
+
+        if (hundred > 0) {
+            result += digits[hundred] + " trăm";
+            if (ten == 0 && unit > 0) result += " linh";
+        }
+        if (ten > 0 && ten != 1) {
+            result += " " + digits[ten] + " mươi";
+            if (ten > 1 && unit == 1) result += " mốt";
+        } else if (ten == 1) {
+            result += " mười";
+            if (unit == 1) result += " một";
+        }
+        if (unit > 0 && ten != 1 && unit != 1) {
+            if (unit == 5 && ten > 0) result += " lăm";
+            else result += " " + digits[unit];
+        }
+        return result.trim();
+    }
+
+    let index = 0;
+    let result = "";
+    while (amount > 0) {
+        let part = amount % 1000;
+        if (part > 0) {
+            let unitName = units[index];
+            result = readThreeDigits(part) + (unitName ? " " + unitName : "") + " " + result;
+        }
+        amount = Math.floor(amount / 1000);
+        index++;
+    }
+
+    result = result.trim();
+    if (result.length > 0) {
+        result = result.charAt(0).toUpperCase() + result.slice(1);
+    }
+    return result + " đồng";
+}
+
+function generateForm(jsonData, index) {
+    let html = '';
+    if (!Array.isArray(jsonData)) return html;
+    jsonData.forEach(section => {
+        html += `<fieldset class="form-section"><legend class="legend-label">${section.title || ''}</legend>`;
+        section.child.forEach(field => {
+            if (field.type === 'table' && Array.isArray(field.columns)) {
+                // Table with add/remove row buttons
+                const tableId = `${index}_${field.id}`;
+                html += `<div class="form-row"><label>${field.label || ''}</label><table class="dynamic-table" id="${tableId}"><thead><tr>`;
+                field.columns.forEach(col => {
+                    html += `<th>${col.header}</th>`;
+                });
+                html += `<th style='width:40px;text-align:center'>#</th>`;
+                html += `</tr></thead><tbody>`;
+                // Initial row
+                html += `<tr>`;
+                field.columns.forEach(col => {
+                    html += `<td><input type="${col.type || 'text'}" name="${tableId}_${col.field}" ${field.pattern ? ` pattern='${field.pattern}'` : ''}/></td>`;
+                });
+                html += `<td style='text-align:center'>`;
+                html += `<button type='button' class='table-btn' onclick='addTableRow("${tableId}", ${JSON.stringify(field.columns).replace(/'/g,"&#39;")})'>+</button>`;
+                html += `<button type='button' class='table-btn' onclick='removeTableRow(this)'>-</button>`;
+                html += `</td></tr>`;
+                html += `</tbody></table></div>`;
+            } else if (field.type === 'select' && Array.isArray(field.options)) {
+                html += `<div class="form-row"><label for="${index}_${field.id}" >${field.label || ''}</label><select id="${index}_${field.id}" name="${index}_${field.id}"${field.required ? ' required' : ''}${field.readonly ? ' disabled' : ''}>`;
+                field.options.forEach(opt => {
+                    html += `<option value="${opt.value}">${opt.text}</option>`;
+                });
+                html += `</select></div>`;
+            } else {
+                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" id="${index}_${field.id}" name="${index}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
+            }
+        });
+        html += `</fieldset>`;
+    });
+    return html;
+}
+
+// Add/remove row functions for dynamic tables
+function addTableRow(tableId, columns) {
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const tr = document.createElement('tr');
+    columns.forEach(col => {
+        const td = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = col.type || 'text';
+        input.name = `${tableId}_${col.field}`;
+        td.appendChild(input);
+        tr.appendChild(td);
+    });
+    // Add buttons
+    const tdBtn = document.createElement('td');
+    tdBtn.style.textAlign = 'center';
+    tdBtn.innerHTML = `<button type='button' class='table-btn' onclick='addTableRow("${tableId}", ${JSON.stringify(columns).replace(/'/g,"&#39;")})'>+</button><button type='button' class='table-btn' onclick='removeTableRow(this)'>-</button>`;
+    tr.appendChild(tdBtn);
+    tbody.appendChild(tr);
+}
+
+function removeTableRow(btn) {
+    const tr = btn.closest('tr');
+    const tbody = tr.parentNode;
+    if (tbody.rows.length > 1) tbody.removeChild(tr);
 }
