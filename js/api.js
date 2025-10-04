@@ -1,3 +1,5 @@
+const FOLDER_ID = "123VLlfdYBWCO5Tja282OtstxvoccyaIS";
+
 function doGet(e) {
 	const action = e.parameter.action;
 	let result;
@@ -67,9 +69,73 @@ function handleUploadRequest(e) {
     const fileData = e.parameter.fileData;
     const fileName = e.parameter.fileName || "unnamed";
     const mimeType = e.parameter.mimeType || "application/octet-stream";
-    const folderId = e.parameter.folderId || "";
+    const folderName = e.parameter.folderName || "";
+    const templateFileId = e.parameter.templateFileId || '';
+    const templateShorten = e.parameter.templateShorten || '';
+    const dossierId = e.parameter.dossierId || '';
 
-    const file = saveFileToDrive(fileData, fileName, mimeType, folderId);
+    const file = saveFileToDrive(fileData, fileName, mimeType, folderName);
+
+    // Ghi vào bảng dossierFiles
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
+    if (!sheet) throw new Error('Sheet dossierFiles không tồn tại.');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    // Tìm id lớn nhất hiện tại
+    let maxId = 0;
+    for (let i = 1; i < data.length; i++) {
+      const idStr = String(data[i][0] || '');
+      if (/^DF\d{8}$/.test(idStr)) {
+        const num = parseInt(idStr.slice(2), 10);
+        if (num > maxId) maxId = num;
+      }
+    }
+    const newId = 'DF' + String(maxId + 1).padStart(8, '0');
+    // Kiểm tra file đã tồn tại (ghi đè): tìm theo dossierId + templateFileId + templateShorten
+    let foundRow = -1;
+    let now = new Date();
+    let dd = String(now.getDate()).padStart(2, '0');
+    let mm = String(now.getMonth() + 1).padStart(2, '0');
+    let yyyy = now.getFullYear();
+    let todayStr = dd + '/' + mm + '/' + yyyy;
+    let dossierIdIdx = headers.indexOf('dossierId');
+    let templateFileIdIdx = headers.indexOf('templateFileId');
+    let templateShortenIdx = headers.indexOf('templateShorten');
+    for (let i = 1; i < data.length; i++) {
+      let row = data[i];
+      if (
+        row[dossierIdIdx] == dossierId &&
+        row[templateFileIdIdx] == templateFileId &&
+        row[templateShortenIdx] == templateShorten
+      ) {
+        foundRow = i + 1; // sheet row index (1-based)
+        break;
+      }
+    }
+    if (foundRow > 0) {
+      // Ghi đè: chỉ cập nhật fileName, url, modifiedDate
+      let nameIdx = headers.indexOf('name');
+      let urlIdx = headers.indexOf('url');
+      let modifiedIdx = headers.indexOf('modifiedDate');
+      sheet.getRange(foundRow, nameIdx + 1).setValue(file.getName());
+      sheet.getRange(foundRow, urlIdx + 1).setValue(file.getUrl());
+      sheet.getRange(foundRow, modifiedIdx + 1).setValue(todayStr);
+    } else {
+      // Thêm mới
+      let row = [];
+      headers.forEach(h => {
+        if (h === 'id') row.push(newId);
+        else if (h === 'name') row.push(file.getName());
+        else if (h === 'url') row.push(file.getUrl());
+        else if (h === 'templateFileId') row.push(templateFileId);
+        else if (h === 'templateShorten') row.push(templateShorten);
+        else if (h === 'dossierId') row.push(dossierId);
+        else if (h === 'data') row.push('');
+        else if (h === 'createDate') row.push(todayStr);
+        else row.push('');
+      });
+      sheet.appendRow(row);
+    }
 
     return {
       success: true,
@@ -207,10 +273,9 @@ function getDossiers(procedure, status) {
 }
 
 function getDossierDetail(id) {
-  id = "D250000001"
   var dossiersSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
   var stepsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('steps');
-  var filesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('files');
+  var filesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('templateFiles');
 
   var dossiersData = dossiersSheet.getDataRange().getValues();
   var stepsData = stepsSheet.getDataRange().getValues();
@@ -275,20 +340,41 @@ function handleListFolders(e) {
   ).setMimeType(ContentService.MimeType.JSON);
 }
 
-function saveFileToDrive(base64Data, fileName, mimeType, folderId) {
+/**
+ * Nhận dữ liệu, tìm hoặc tạo folder con trong ROOT, rồi lưu file vào
+ */
+function saveFileToDrive(base64Data, fileName, mimeType, folderName) {
+  // Xử lý chuỗi base64
   if (base64Data.indexOf('base64,') !== -1) {
     base64Data = base64Data.split('base64,')[1];
   }
-
   const decoded = Utilities.base64Decode(base64Data);
   const blob = Utilities.newBlob(decoded, mimeType, fileName);
 
-  let file;
-  if (folderId) {
-    const folder = DriveApp.getFolderById(folderId);
-    file = folder.createFile(blob);
+  // 📁 Lấy folder gốc
+  const rootFolder = DriveApp.getFolderById(FOLDER_ID);
+
+  // 📁 Tìm folder con theo tên trong folder gốc
+  let targetFolder;
+  if (folderName) {
+    const folders = rootFolder.getFoldersByName(folderName);
+    if (folders.hasNext()) {
+      targetFolder = folders.next(); // folder đã tồn tại
+    } else {
+      targetFolder = rootFolder.createFolder(folderName); // tạo mới
+    }
   } else {
-    file = DriveApp.createFile(blob);
+    targetFolder = rootFolder;
   }
-  return file;
+
+  // 📝 Ghi file vào folder đích
+  // Nếu muốn overwrite file trùng tên thì kiểm tra trước
+  const existingFiles = targetFolder.getFilesByName(fileName);
+  if (existingFiles.hasNext()) {
+    existingFiles.next().setTrashed(true); // bỏ file cũ vào thùng rác
+  }
+
+  const newFile = targetFolder.createFile(blob);
+  return newFile; // trả về object file
 }
+

@@ -481,11 +481,13 @@ function showModal(type, file) {
     const modal = document.getElementById('modal-confirm');
     const msg = document.getElementById('modal-message');
     if (type === 'save') {
-        msg.textContent = 'Bạn có chắc chắn muốn lưu file này?';
+        msg.innerHTML = 'Bạn có chắc chắn muốn lưu file này?';
     } else if (type === 'preview') {
-        msg.textContent = 'Bạn có chắc chắn muốn xem thử file này?';
+        msg.innerHTML = 'Bạn có chắc chắn muốn xem thử file này?';
     } else if (type === 'next') {
-        msg.textContent = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
+        msg.innerHTML = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
+    } else if (type === 'upload') {
+        msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi upload file.';
     }
     let btnConfirm = document.getElementById('btn-confirm');
     let btnCancel = document.getElementById('btn-cancel');
@@ -498,12 +500,18 @@ function showModal(type, file) {
         // Hiệu ứng xoay
         spin.classList.add('spinning');
         spin.style.display = 'inline-block';
-        setTimeout(() => {
+        if (type !== 'upload') {
+            setTimeout(() => {
+                spin.classList.remove('spinning');
+                spin.style.display = 'none';
+                modal.style.display = 'none';
+                // alert(type === 'save' ? 'Đã lưu file!' : type === 'preview' ? 'Đã xem thử file!' : type === 'next' ? 'Đã chuyển trạng thái!' : '');
+            }, 5000);
+        } else {
             spin.classList.remove('spinning');
             spin.style.display = 'none';
             modal.style.display = 'none';
-            alert(type === 'save' ? 'Đã lưu file!' : type === 'preview' ? 'Đã xem thử file!' : type === 'next' ? 'Đã chuyển trạng thái!' : '');
-        }, 5000);
+        }
     };
 
     btnCancel.onclick = function() {
@@ -615,15 +623,34 @@ function renderRecordFiles(files) {
                 <span class="file-name">${file.name}</span>
                 <span class="file-toggle-icon" id="toggle-icon-${file.id}">▼</span>
             </div>`;
-        html += 
-            `<div class="record-file-form" id="file-form-${file.id}" style="display: none;">`;
-        html += generateForm(JSON.parse(file.form), index);
-        html += `
-            <div class="record-actions">
-                <button class="action-btn" onclick="showModal('save', '${file.id}')">Ghi lại</button>
-                <button class="action-btn" onclick="showModal('preview', '${file.id}')">Xem thử</button>
-            </div>
-        </div>`;
+        html += `<div class="record-file-form" id="file-form-${file.id}" style="display: none;">`;
+        // Nếu file.form rỗng hoặc không có, hiển thị giao diện upload file và danh sách file đã upload
+        if (!file.form || file.form === '' || file.form === '{}' || file.form === '[]') {
+            html += `<div class='upload-section'>
+                <input type='file' id='upload-input-${file.id}' multiple />
+                <button class='action-btn' onclick='uploadFileHandler("${file.id}", "${file.shorten}")'>Tải lên</button>
+                <div class='uploaded-files' id='uploaded-files-${file.id}'>`;
+            if (Array.isArray(file.uploadedFiles) && file.uploadedFiles.length) {
+                file.uploadedFiles.forEach(f => {
+                    html += `<div class='uploaded-file-item'>
+                        <a href='${f.url}' target='_blank'>${f.name}</a>
+                        <button class='action-btn' onclick='removeUploadedFileHandler("${file.id}", "${f.name}")'>Xóa</button>
+                    </div>`;
+                });
+            } else {
+                html += `<div class='uploaded-file-item'>Chưa có file nào.</div>`;
+            }
+            html += `</div></div>`;
+        } else {
+            html += generateForm(JSON.parse(file.form), index);
+            html += `
+                <div class="record-actions">
+                    <button class="action-btn" onclick="showModal('save', '${file.id}')">Ghi lại</button>
+                    <button class="action-btn" onclick="showModal('preview', '${file.id}')">Xem thử</button>
+                </div>
+            `;
+        }
+        html += `</div>`;
         fileDiv.innerHTML = html;
         container.appendChild(fileDiv);
     });
@@ -677,6 +704,86 @@ function numberToVietnamese(amount) {
         result = result.charAt(0).toUpperCase() + result.slice(1);
     }
     return result + " đồng";
+}
+
+async function uploadFileHandler(id, shorten) {
+    const fileInput = document.getElementById(`upload-input-${id}`);
+    const file = fileInput.files[0];
+    const result = document.getElementById(`uploaded-files-${id}`);
+    let folderName = sessionStorage.getItem('dossierId') || '';
+    const btn = fileInput.nextElementSibling;
+
+    if (!file) {
+        result.innerText = "Vui lòng chọn file!";
+        return;
+    }
+
+    // Hiệu ứng xoay và disable nút
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.add('btn-loading');
+        btn.insertAdjacentHTML('afterbegin', SPINNER_SVG);
+    }
+    result.innerText = "Đang đọc file...";
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64Data = e.target.result.split(",")[1]; // bỏ prefix "data:...;base64,"
+        result.innerText = "Đang upload...";
+
+        const body = new URLSearchParams();
+        body.append("fileData", base64Data);
+        body.append("fileName", folderName + "_" + shorten);
+        body.append("mimeType", file.type);
+        body.append("folderName", folderName);
+        body.append("dossierId", folderName);
+        body.append("templateFileId", id);
+        body.append("templateShorten", shorten);
+        body.append("action", "upload");
+
+        let uploadSuccess = false;
+        let message = '';
+        let url = '';
+        let name = '';
+        try {
+            const res = await fetch(ggApiUrl, {
+                method: "POST",
+                body: body
+            });
+            const data = await res.json();
+            if (data.success) {
+                uploadSuccess = true;
+                url = data.url;
+                name = data.name;
+                message = `✅ Upload thành công: <a href='${url}' target='_blank'>${name}</a>`;
+            } else {
+                message = "❌ Lỗi: " + data.error;
+            }
+            // Hiện modal thông báo
+            showModal('upload', {success: uploadSuccess, message, url, name});
+        } catch (err) {
+            message = "❌ Upload thất bại: " + err.message;
+        
+            // Hiện modal thông báo
+            showModal('upload', {success: uploadSuccess, message, url, name});
+        }
+        result.innerText = "";
+
+        // Clear input file
+        fileInput.value = '';
+
+        // Reset nút
+        if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('btn-loading');
+            const spinner = btn.querySelector('.spinner-svg');
+            if (spinner) spinner.remove();
+        }
+
+        // Cập nhật lại danh sách file đã upload nếu cần (có thể reload lại detail)
+        // result.innerHTML = message;
+    };
+    reader.readAsDataURL(file);
 }
 
 function generateForm(jsonData, index) {
