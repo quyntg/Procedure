@@ -616,9 +616,7 @@ h2 {
 .form-row input[type="date"]:focus {
     border: 1.5px solid #0ea5e9;
 }
-.form-row input[type="file"] {
-    
-}
+
 .record-actions {
     display: flex;
     gap: 1.5rem;
