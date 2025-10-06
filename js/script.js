@@ -108,6 +108,17 @@ async function getStepsByProcedureId(procedureId) {
     });
 }
 
+// Lấy danh sách file đã upload theo dossierId (API Google Apps Script)
+async function getDossierFiles(dossierId, templateFileId) {
+    const res = await fetch(ggApiUrl + '?action=getDossierFiles&dossierId=' + encodeURIComponent(dossierId) + '&templateFileId=' + encodeURIComponent(templateFileId), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    });
+    return res.json();
+}
+
 // home js
 async function loadProcedures() {
     procedures = await getProceduresWithCounter();
@@ -130,7 +141,6 @@ async function loadDossiers(procedure, status) {
 
 async function loadDossierDetail(id) {
     let dossierDetail = await getDossierDetail(id);
-    console.log(dossierDetail);
     sessionStorage.setItem('dossierDetail', JSON.stringify(dossierDetail));
 }
 
@@ -480,18 +490,25 @@ function viewRecord(id) {
 function showModal(type, file) {
     const modal = document.getElementById('modal-confirm');
     const msg = document.getElementById('modal-message');
-    if (type === 'save') {
-        msg.innerHTML = 'Bạn có chắc chắn muốn lưu file này?';
-    } else if (type === 'preview') {
-        msg.innerHTML = 'Bạn có chắc chắn muốn xem thử file này?';
-    } else if (type === 'next') {
-        msg.innerHTML = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
-    } else if (type === 'upload') {
-        msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi upload file.';
-    }
     let btnConfirm = document.getElementById('btn-confirm');
     let btnCancel = document.getElementById('btn-cancel');
     let spin = document.getElementById('spin-confirm');
+    
+    if (type === 'save') {
+        btnCancel.style.display = '';
+        msg.innerHTML = 'Bạn có chắc chắn muốn lưu file này?';
+    } else if (type === 'preview') {
+        btnCancel.style.display = '';
+        msg.innerHTML = 'Bạn có chắc chắn muốn xem thử file này?';
+    } else if (type === 'next') {
+        btnCancel.style.display = '';
+        msg.innerHTML = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
+    } else if (type === 'upload') {
+        btnCancel.style.display = 'none';
+        msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi upload file.';
+    } else if (type === 'delete') {
+        msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi xoá file.';
+    }
 
     spin.style.display = 'none';
     modal.style.display = 'flex';
@@ -500,17 +517,19 @@ function showModal(type, file) {
         // Hiệu ứng xoay
         spin.classList.add('spinning');
         spin.style.display = 'inline-block';
-        if (type !== 'upload') {
+        if (type === 'upload') {
+            spin.classList.remove('spinning');
+            spin.style.display = 'none';
+            modal.style.display = 'none';
+        } else if (type === 'delete') {            
+            removeUploadedFileHandler(file.fileId, file.templateFileId);
+        } else {
             setTimeout(() => {
                 spin.classList.remove('spinning');
                 spin.style.display = 'none';
                 modal.style.display = 'none';
                 // alert(type === 'save' ? 'Đã lưu file!' : type === 'preview' ? 'Đã xem thử file!' : type === 'next' ? 'Đã chuyển trạng thái!' : '');
             }, 5000);
-        } else {
-            spin.classList.remove('spinning');
-            spin.style.display = 'none';
-            modal.style.display = 'none';
         }
     };
 
@@ -630,11 +649,11 @@ function renderRecordFiles(files) {
                 <input type='file' id='upload-input-${file.id}' multiple />
                 <button class='action-btn' onclick='uploadFileHandler("${file.id}", "${file.shorten}")'>Tải lên</button>
                 <div class='uploaded-files' id='uploaded-files-${file.id}'>`;
-            if (Array.isArray(file.uploadedFiles) && file.uploadedFiles.length) {
-                file.uploadedFiles.forEach(f => {
+            if (Array.isArray(file.dossierFiles) && file.dossierFiles.length) {
+                file.dossierFiles.forEach(f => {
                     html += `<div class='uploaded-file-item'>
                         <a href='${f.url}' target='_blank'>${f.name}</a>
-                        <button class='action-btn' onclick='removeUploadedFileHandler("${file.id}", "${f.name}")'>Xóa</button>
+                        <button class='action-btn' style='margin-left: 10px' onclick='removeFile("${f.id}", "${f.templateFileId}")'>Xóa</button>
                     </div>`;
                 });
             } else {
@@ -745,6 +764,8 @@ async function uploadFileHandler(id, shorten) {
         let message = '';
         let url = '';
         let name = '';
+        let fileId = '';
+        let dossierFiles = []; // Cập nhật lại danh sách file đã upload sau khi upload thành công
         try {
             const res = await fetch(ggApiUrl, {
                 method: "POST",
@@ -755,19 +776,40 @@ async function uploadFileHandler(id, shorten) {
                 uploadSuccess = true;
                 url = data.url;
                 name = data.name;
+                fileId = data.id;
+                dossierFiles.push(data);
                 message = `✅ Upload thành công: <a href='${url}' target='_blank'>${name}</a>`;
             } else {
                 message = "❌ Lỗi: " + data.error;
+            }
+            // Sau khi upload thành công, load lại danh sách file đã upload
+            if (uploadSuccess) {
+                // const dossierFiles = await getDossierFiles(folderName, id);
+                // Tìm lại fileDiv và cập nhật danh sách file đã upload
+                const uploadedFilesDiv = document.getElementById(`uploaded-files-${id}`);
+                if (uploadedFilesDiv) {
+                    let html = '';
+                    const filtered = Array.isArray(dossierFiles) ? dossierFiles.filter(f => f.templateFileId == id) : [];
+                    if (filtered.length) {
+                        filtered.forEach(f => {
+                            html += `<div class='uploaded-file-item'>
+                                <a href='${f.url}' target='_blank'>${f.name}</a>
+                                <button class='action-btn' style='margin-left: 10px' onclick='removeFile("${fileId}", "${id}")'>Xóa</button>
+                            </div>`;
+                        });
+                    } else {
+                        html = `<div class='uploaded-file-item'>Chưa có file nào.</div>`;
+                    }
+                    uploadedFilesDiv.innerHTML = html;
+                }
             }
             // Hiện modal thông báo
             showModal('upload', {success: uploadSuccess, message, url, name});
         } catch (err) {
             message = "❌ Upload thất bại: " + err.message;
-        
-            // Hiện modal thông báo
             showModal('upload', {success: uploadSuccess, message, url, name});
         }
-        result.innerText = "";
+        //result.innerText = "";
 
         // Clear input file
         fileInput.value = '';
@@ -779,11 +821,40 @@ async function uploadFileHandler(id, shorten) {
             const spinner = btn.querySelector('.spinner-svg');
             if (spinner) spinner.remove();
         }
-
-        // Cập nhật lại danh sách file đã upload nếu cần (có thể reload lại detail)
-        // result.innerHTML = message;
     };
     reader.readAsDataURL(file);
+}
+
+function removeFile(fileId, templateFileId) {
+    showModal('delete', {message: 'Bạn có chắc chắn muốn xoá file này?', templateFileId: templateFileId, fileId: fileId});
+}
+
+// Xoá file đã upload trong dossierFiles theo id, hiệu ứng như nút upload
+async function removeUploadedFileHandler(fileId, templateFileId) {
+    let data = { success: false };
+    let message = '';
+    try {
+        const res = await fetch(ggApiUrl + '?action=deleteDossierFile&id=' + encodeURIComponent(fileId), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        data = await res.json();
+        
+        const modal = document.getElementById('modal-confirm');
+        let spin = document.getElementById('spin-confirm');
+
+        spin.classList.remove('spinning');
+        spin.style.display = 'none';
+        modal.style.display = 'none';
+        
+        const result = document.getElementById(`uploaded-files-${templateFileId}`);
+        result.innerHTML = '';
+        showModal('upload', {success: data.success, message: 'Xoá file thành công!'});
+    } catch (err) {
+        message = '❌ Xoá thất bại: ' + err.message;
+    }
 }
 
 function generateForm(jsonData, index) {

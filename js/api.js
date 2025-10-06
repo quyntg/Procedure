@@ -16,6 +16,13 @@ function doGet(e) {
 	} else if (action === "getDossierDetail") {
 		const id = e.parameter.id;
 		result = JSON.stringify(getDossierDetail(id));
+	} else if (action === "getDossierFiles") {
+		const dossierId = e.parameter.dossierId;
+		const templateFileId = e.parameter.templateFileId;
+		result = JSON.stringify(getDossierFiles(dossierId, templateFileId));
+	} else if (action === "deleteDossierFile") {
+		const id = e.parameter.id;
+		result = JSON.stringify(deleteDossierFile(id));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -139,7 +146,8 @@ function handleUploadRequest(e) {
 
     return {
       success: true,
-      id: file.getId(),
+      id: newId,
+      templateFileId: templateFileId,
       name: file.getName(),
       url: file.getUrl()
     };
@@ -276,20 +284,25 @@ function getDossierDetail(id) {
   var dossiersSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
   var stepsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('steps');
   var filesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('templateFiles');
+  var dossierFilesSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
 
   var dossiersData = dossiersSheet.getDataRange().getValues();
   var stepsData = stepsSheet.getDataRange().getValues();
   var filesData = filesSheet.getDataRange().getValues();
-  
+  var dossierFilesData = dossierFilesSheet.getDataRange().getValues();
+
   var dossiersHeaders = dossiersData.shift();
   var stepsHeaders = stepsData.shift();
   var filesHeaders = filesData.shift();
+  var dossierFilesHeaders = dossierFilesData.shift();
 
   var idIdx = dossiersHeaders.indexOf('id');
   var statusIdx = dossiersHeaders.indexOf('status');
   var stepIdx = stepsHeaders.indexOf('id');
   var filesIdx = stepsHeaders.indexOf('files');
   var fileIdx = filesHeaders.indexOf('id');
+  var dossierFileDossierIdIdx = dossierFilesHeaders.indexOf('dossierId');
+  var templateFileIdIdx = dossierFilesHeaders.indexOf('templateFileId');
 
   for (var i = 0; i < dossiersData.length; i++) {
     if (String(dossiersData[i][idIdx]) === String(id)) {
@@ -308,6 +321,7 @@ function getDossierDetail(id) {
             for (var h = 0; h < filesData.length; h++) {
               if (filesArr[f] === filesData[h][fileIdx]) {
                 var fileObj = {};
+                var dfArr = [];
                 for (var m = 0; m < filesHeaders.length; m++) {
                   if (filesHeaders[m] === 'form') {
                     fileObj[filesHeaders[m]] = JSON.parse(JSON.stringify(filesData[h][m]));
@@ -315,6 +329,16 @@ function getDossierDetail(id) {
                     fileObj[filesHeaders[m]] = filesData[h][m];
                   }
                 }
+                for (var n = 0; n < dossierFilesData.length; n++) {
+                  if (dossierFilesData[n][dossierFileDossierIdIdx] === id && dossierFilesData[n][templateFileIdIdx] === filesData[h][fileIdx]) {
+                    var dfObj = {};
+                    for (var p = 0; p < dossierFilesHeaders.length; p++) {
+                      dfObj[dossierFilesHeaders[p]] = dossierFilesData[n][p];
+                    }
+                    dfArr.push(dfObj);
+                  }
+                }
+                fileObj['dossierFiles'] = dfArr;
                 files.push(fileObj);
               }
             }
@@ -376,5 +400,59 @@ function saveFileToDrive(base64Data, fileName, mimeType, folderName) {
 
   const newFile = targetFolder.createFile(blob);
   return newFile; // trả về object file
+}
+
+// Lấy danh sách file đã upload theo dossierId
+function getDossierFiles(dossierId, templateFileId) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
+  if (!sheet) return { success: false, message: 'Sheet dossierFiles không tồn tại.' };
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var dossierIdIdx = headers.indexOf('dossierId');
+  var templateFileIdIdx = headers.indexOf('templateFileId');
+  var result = [];
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][dossierIdIdx]) === String(dossierId) && String(data[i][templateFileIdIdx]) === String(templateFileId)) {
+      var row = {};
+      for (var j = 0; j < headers.length; j++) {
+        row[headers[j]] = data[i][j];
+      }
+      result.push(row);
+    }
+  }
+  return result;
+}
+
+// Xoá file đã upload trong dossierFiles theo id
+function deleteDossierFile(id) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
+  if (!sheet) return { success: false, message: 'Sheet dossierFiles không tồn tại.' };
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var idIdx = headers.indexOf('id');
+  var urlIdx = headers.indexOf('url');
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][idIdx]) === String(id)) {
+      // Xoá file trên Google Drive nếu có url
+      var url = data[i][urlIdx];
+      if (url) {
+        try {
+          var fileId = '';
+          // Lấy fileId từ url dạng https://drive.google.com/file/d/FILE_ID/view?usp=drivesdk
+          var match = url.match(/\/d\/([\w-]+)/);
+          if (match && match[1]) fileId = match[1];
+          if (fileId) {
+            var file = DriveApp.getFileById(fileId);
+            file.setTrashed(true);
+          }
+        } catch (err) {
+          // Nếu lỗi vẫn tiếp tục xoá dòng
+        }
+      }
+      sheet.deleteRow(i + 2); // +2 vì bỏ header và index 1-based
+      return { success: true };
+    }
+  }
+  return { success: false, message: 'Không tìm thấy file với id này.' };
 }
 
