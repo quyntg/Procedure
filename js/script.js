@@ -10,6 +10,7 @@ let dossiers = []; // Dữ liệu hiện tại hiển thị trong bảng
 let isMobile = false;
 let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
 let recordFiles = []; // Mảng lưu trữ các file đã upload
+let hasFiles = false;
 
 function loadPage(url, id) {
 	const app = document.getElementById(id);
@@ -19,8 +20,47 @@ function loadPage(url, id) {
 			app.innerHTML = html;
 		})
 		.catch(() => {
-			app.innerHTML = "<h2>Page not found</h2>";
+			if (app) app.innerHTML = '<p class="error">Không thể tải trang.</p>';
 		});
+}
+
+// Hàm khởi tạo spinner cho button
+function initSpinner(btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.classList.add('btn-loading');
+    btn.insertAdjacentHTML('afterbegin', SPINNER_SVG);
+}
+
+function removeSpinner(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.classList.remove('btn-loading');
+    const spinner = btn.querySelector('.spinner-svg');
+    if (spinner) spinner.remove();
+}
+
+// Hiển thị spinner toàn màn hình khi gọi API
+function showGlobalSpinner() {
+    if (document.getElementById('global-spinner')) return;
+    const div = document.createElement('div');
+    div.id = 'global-spinner';
+    div.innerHTML = `
+        <div class="global-spinner-backdrop"></div>
+        <div class="global-spinner-svg">
+            ${SPINNER_SVG}
+        </div>
+    `;
+    document.body.appendChild(div);
+}
+
+function hideGlobalSpinner() {
+    const div = document.getElementById('global-spinner');
+    if (div) div.remove();
+}
+
+function goBack() {
+    window.history.back();
 }
 
 // Nếu F5 ở trang /procedure thì chuyển về /home
@@ -30,6 +70,7 @@ window.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// login
 function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value.trim();
@@ -120,6 +161,33 @@ async function getDossierFiles(dossierId, templateFileId) {
 }
 
 // home js
+
+// Icon đóng/mở cho từng danh sách
+function initHomeToggleIcons() {
+    const dossierList = document.getElementById('dossierList');
+    const procedureList = document.getElementById('procedureList');
+    const toggleDossier = document.getElementById('toggleDossier');
+    const toggleProcedure = document.getElementById('toggleProcedure');
+    const dossierHeader = document.getElementById('dossierHeader');
+    const procedureHeader = document.getElementById('procedureHeader');
+    let openDossier = true;
+    let openProcedure = true;
+    if (toggleDossier && dossierHeader && dossierList) {
+        dossierHeader.onclick = function() {
+            openDossier = !openDossier;
+            dossierList.style.display = openDossier ? '' : 'none';
+            toggleDossier.textContent = openDossier ? '▼' : '▶';
+        };
+    }
+    if (toggleProcedure && procedureHeader && procedureList) {
+        procedureHeader.onclick = function() {
+            openProcedure = !openProcedure;
+            procedureList.style.display = openProcedure ? '' : 'none';
+            toggleProcedure.textContent = openProcedure ? '▼' : '▶';
+        };
+    }
+}
+
 async function loadProcedures() {
     procedures = await getProceduresWithCounter();
     renderProcedures();
@@ -133,7 +201,28 @@ async function loadSteps(procedureId, procedureName) {
 }
 
 async function loadDossiers(procedure, status) {
-    dossiers = await getDossiers(procedure, status);
+    let data = await getDossiers(procedure, status);
+    dossiers = data.dossiers;
+    let counters = data.counter;
+    let counter = 0;
+
+    counters.forEach(c => {
+        counter += c.counter;
+        let id = 'li-' + c.stepId;
+        const li = document.getElementById(id);
+        if (li) {
+            li.querySelector('.li-counter').textContent = c.counter;
+        }
+    });
+
+    if (procedure) {
+        let id = 'li-' + procedure;
+        const li = document.getElementById(id);
+        if (li) {
+            li.querySelector('.li-counter').textContent = counter;
+        }
+    }
+
     currentPage = 1;
     renderDossiers();
     renderPagination();
@@ -148,7 +237,9 @@ async function renderProcedures() {
     const ul = document.getElementById('dossierList');
     const ul2 = document.getElementById('procedureList');
     if (!ul) return;
-    else ul.innerHTML = '';
+    ul.innerHTML = '';
+    if (ul2) ul2.innerHTML = ''; // Thêm dòng này để clear procedureList
+    
     procedures.forEach(proc => {
         // Cha
         const li = document.createElement('li');
@@ -181,6 +272,7 @@ async function renderProcedures() {
         const icon = document.createElement('span');
         icon.className = 'toggle-icon';
         icon.textContent = expanded[proc.id] ? '▼' : '▶';
+        li.id = 'li-' + proc.id;
         li.appendChild(icon);
         const nameSpan = document.createElement('span');
         nameSpan.textContent = ' ' + proc.name;
@@ -229,8 +321,8 @@ async function renderProcedures() {
                 renderProcedures();
             };
         }
-    ul.appendChild(li);
-    if (ul2) ul2.appendChild(li2);
+        ul.appendChild(li);
+        if (ul2) ul2.appendChild(li2);
         // Con
         if (proc.children && proc.children.length && expanded[proc.id]) {
             proc.children.forEach(child => {
@@ -247,6 +339,7 @@ async function renderProcedures() {
                     counter.style.display = 'none';
                 }
                 cli.appendChild(counter);
+                cli.id = 'li-' + child.id;
                 cli.style.position = 'relative';
                 if (selectedIdDossier === child.id) cli.classList.add('active-child');
                 cli.onclick = (e) => {
@@ -346,7 +439,6 @@ function renderPagination() {
         pagDiv.appendChild(btn);
     }
 }
-// end home js
 
 async function getDossiers(procedure, status) {
     showGlobalSpinner();
@@ -358,44 +450,19 @@ async function getDossiers(procedure, status) {
     })
     .then(res => res.json())
     .then(data => {
-        if (data && Array.isArray(data)) {
+        if (data) {
             return data;
         }
-        return [];
+        return {dossiers: [], counter: []};
     })
     .catch(() => [])
     .finally(() => {
         hideGlobalSpinner();
     });
 }
+// end home js
 
-async function getDossierDetail(id) {
-    showGlobalSpinner();
-    return fetch(ggApiUrl + '?action=getDossierDetail&id=' + encodeURIComponent(id), {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data && typeof data === 'object') {
-            sessionStorage.setItem('dossierDetail', JSON.stringify(data));
-            return data;
-        }
-        initDossierDetail({});
-        return {};
-    })
-    .catch(() => {
-        initDossierDetail({});
-    })
-    .finally(data => {
-        initDossierDetail(data);
-        hideGlobalSpinner();
-    });
-}
-
-// --- Procedure page logic ---
+// Procedure js
 function renderSteps() {
     const timeline = document.getElementById("timeline");
     if (!timeline) return;
@@ -482,6 +549,38 @@ function handleSidebarMobile() {
     }
 }
 
+// dossier js
+async function getDossierDetail(id) {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=getDossierDetail&id=' + encodeURIComponent(id), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && typeof data === 'object') {
+            sessionStorage.setItem('dossierDetail', JSON.stringify(data));
+            if (data.files && data.files.length > 0) {
+                hasFiles = true;
+            } else {
+                hasFiles = false;
+            }
+            return data;
+        }
+        initDossierDetail({});
+        return {};
+    })
+    .catch(() => {
+        initDossierDetail({});
+    })
+    .finally(data => {
+        initDossierDetail(data);
+        hideGlobalSpinner();
+    });
+}
+
 function viewRecord(id) {
     sessionStorage.setItem('dossierId', id);
     page('/dossier?id=' + id);
@@ -503,9 +602,9 @@ function showModal(type, file) {
     } else if (type === 'next') {
         btnCancel.style.display = '';
         msg.innerHTML = 'Bạn có chắc chắn muốn chuyển trạng thái hồ sơ?';
-    } else if (type === 'upload') {
+    } else if (type === 'notification') {
         btnCancel.style.display = 'none';
-        msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi upload file.';
+        msg.innerHTML = file.message || 'Đã có lỗi xảy ra.';
     } else if (type === 'delete') {
         msg.innerHTML = file.message || 'Đã có lỗi xảy ra khi xoá file.';
     }
@@ -517,12 +616,41 @@ function showModal(type, file) {
         // Hiệu ứng xoay
         spin.classList.add('spinning');
         spin.style.display = 'inline-block';
-        if (type === 'upload') {
+        if (type === 'notification') {
             spin.classList.remove('spinning');
             spin.style.display = 'none';
             modal.style.display = 'none';
+
+            if (file.type && file.type === 'next') {
+                const activeLi = dossierList.querySelector('.active-child');
+                if (activeLi) {
+                    loadProcedures();
+                    activeLi.click();
+                }
+            }
         } else if (type === 'delete') {            
             removeUploadedFileHandler(file.fileId, file.templateFileId);
+        } else if (type === 'next') {
+            let dossierId = sessionStorage.getItem('dossierId') || '';
+            if (hasFiles) {
+                let files = document.querySelectorAll('.uploaded-files');
+                let allUploaded = true;
+
+                files.forEach(file => {
+                    let a = file.querySelectorAll('.uploaded-file-item a');
+                    if (a.length === 0) {
+                        allUploaded = false;
+                    }
+                });
+
+                if (!allUploaded) {
+                    showModal('notification', { message: 'Vui lòng tải lên đầy đủ file trước khi chuyển trạng thái!' });
+                    return;
+                }
+            }
+            nextStepDossierHandler(dossierId);
+        }  else if (type === 'save') {            
+            saveFormData(file.formId);
         } else {
             setTimeout(() => {
                 spin.classList.remove('spinning');
@@ -538,76 +666,12 @@ function showModal(type, file) {
     };
 }
 
-// Hàm khởi tạo spinner cho button
-function initSpinner(btn) {
-    if (!btn) return;
-    btn.disabled = true;
-    btn.classList.add('btn-loading');
-    btn.insertAdjacentHTML('afterbegin', SPINNER_SVG);
-}
-
-function removeSpinner(btn) {
-    if (!btn) return;
-    btn.disabled = false;
-    btn.classList.remove('btn-loading');
-    const spinner = btn.querySelector('.spinner-svg');
-    if (spinner) spinner.remove();
-}
-
-// Hiển thị spinner toàn màn hình khi gọi API
-function showGlobalSpinner() {
-    if (document.getElementById('global-spinner')) return;
-    const div = document.createElement('div');
-    div.id = 'global-spinner';
-    div.innerHTML = `
-        <div class="global-spinner-backdrop"></div>
-        <div class="global-spinner-svg">
-            ${SPINNER_SVG}
-        </div>
-    `;
-    document.body.appendChild(div);
-}
-
-function hideGlobalSpinner() {
-    const div = document.getElementById('global-spinner');
-    if (div) div.remove();
-}
-
-function goBack() {
-    window.history.back();
-}
-
-// Icon đóng/mở cho từng danh sách
-function initHomeToggleIcons() {
-    const dossierList = document.getElementById('dossierList');
-    const procedureList = document.getElementById('procedureList');
-    const toggleDossier = document.getElementById('toggleDossier');
-    const toggleProcedure = document.getElementById('toggleProcedure');
-    const dossierHeader = document.getElementById('dossierHeader');
-    const procedureHeader = document.getElementById('procedureHeader');
-    let openDossier = true;
-    let openProcedure = true;
-    if (toggleDossier && dossierHeader && dossierList) {
-        dossierHeader.onclick = function() {
-            openDossier = !openDossier;
-            dossierList.style.display = openDossier ? '' : 'none';
-            toggleDossier.textContent = openDossier ? '▼' : '▶';
-        };
-    }
-    if (toggleProcedure && procedureHeader && procedureList) {
-        procedureHeader.onclick = function() {
-            openProcedure = !openProcedure;
-            procedureList.style.display = openProcedure ? '' : 'none';
-            toggleProcedure.textContent = openProcedure ? '▼' : '▶';
-        };
-    }
-}
-
 function initDossierDetail(dossierDetail) {
     // Nếu không truyền vào thì fallback lấy từ sessionStorage (giữ tương thích)
     if (!dossierDetail) {
         dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
     }
+    
     document.getElementById('record-id').textContent = dossierDetail.id || '';
     document.getElementById('record-name').textContent = dossierDetail.name || '';
     document.getElementById('record-customer').textContent = dossierDetail.customer || '';
@@ -615,6 +679,33 @@ function initDossierDetail(dossierDetail) {
     document.getElementById('record-modifiedDate').textContent = dossierDetail.modifiedDate || '';
 
     renderRecordFiles(dossierDetail.files || []);
+}
+
+async function nextStepDossierHandler(dossierId) {
+    try {
+        const res = await fetch(ggApiUrl + '?action=nextStepDossier&dossierId=' + encodeURIComponent(dossierId), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        });
+        const data = await res.json();
+        
+        const modal = document.getElementById('modal-confirm');
+        let spin = document.getElementById('spin-confirm');
+
+        spin.classList.remove('spinning');
+        spin.style.display = 'none';
+        modal.style.display = 'none';
+
+        if (data.success) {
+            showModal('notification', { message: 'Chuyển bước thành công!', type: 'next' });
+        } else {
+            showModal('notification', { message: data.message || 'Chuyển bước thất bại.' });
+        }
+    } catch (err) {
+        showModal('notification', { message: 'Lỗi chuyển bước: ' + err.message });
+    }
 }
 
 // Đóng/mở form nhập liệu cho từng file
@@ -661,11 +752,11 @@ function renderRecordFiles(files) {
             }
             html += `</div></div>`;
         } else {
-            html += generateForm(JSON.parse(file.form), index);
+            html += generateForm(JSON.parse(file.form), file.id);
             html += `
                 <div class="record-actions">
-                    <button class="action-btn" onclick="showModal('save', '${file.id}')">Ghi lại</button>
-                    <button class="action-btn" onclick="showModal('preview', '${file.id}')">Xem thử</button>
+                    <button class="action-btn" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
+                    <button class="action-btn" onclick="showModal('preview', { formId: '${file.id}' })">Xem thử</button>
                 </div>
             `;
         }
@@ -673,56 +764,6 @@ function renderRecordFiles(files) {
         fileDiv.innerHTML = html;
         container.appendChild(fileDiv);
     });
-}
-
-function numberToVietnamese(amount) {
-    if (typeof amount !== "number") amount = parseInt(amount, 10);
-    if (isNaN(amount)) return "";
-
-    const digits = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
-    const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
-
-    function readThreeDigits(num) {
-        let hundred = Math.floor(num / 100);
-        let ten = Math.floor((num % 100) / 10);
-        let unit = num % 10;
-        let result = "";
-
-        if (hundred > 0) {
-            result += digits[hundred] + " trăm";
-            if (ten == 0 && unit > 0) result += " linh";
-        }
-        if (ten > 0 && ten != 1) {
-            result += " " + digits[ten] + " mươi";
-            if (ten > 1 && unit == 1) result += " mốt";
-        } else if (ten == 1) {
-            result += " mười";
-            if (unit == 1) result += " một";
-        }
-        if (unit > 0 && ten != 1 && unit != 1) {
-            if (unit == 5 && ten > 0) result += " lăm";
-            else result += " " + digits[unit];
-        }
-        return result.trim();
-    }
-
-    let index = 0;
-    let result = "";
-    while (amount > 0) {
-        let part = amount % 1000;
-        if (part > 0) {
-            let unitName = units[index];
-            result = readThreeDigits(part) + (unitName ? " " + unitName : "") + " " + result;
-        }
-        amount = Math.floor(amount / 1000);
-        index++;
-    }
-
-    result = result.trim();
-    if (result.length > 0) {
-        result = result.charAt(0).toUpperCase() + result.slice(1);
-    }
-    return result + " đồng";
 }
 
 async function uploadFileHandler(id, shorten) {
@@ -804,10 +845,10 @@ async function uploadFileHandler(id, shorten) {
                 }
             }
             // Hiện modal thông báo
-            showModal('upload', {success: uploadSuccess, message, url, name});
+            showModal('notification', {success: uploadSuccess, message, url, name});
         } catch (err) {
             message = "❌ Upload thất bại: " + err.message;
-            showModal('upload', {success: uploadSuccess, message, url, name});
+            showModal('notification', {success: uploadSuccess, message, url, name});
         }
         //result.innerText = "";
 
@@ -851,13 +892,13 @@ async function removeUploadedFileHandler(fileId, templateFileId) {
         
         const result = document.getElementById(`uploaded-files-${templateFileId}`);
         result.innerHTML = '';
-        showModal('upload', {success: data.success, message: 'Xoá file thành công!'});
+        showModal('notification', {success: data.success, message: 'Xoá file thành công!'});
     } catch (err) {
         message = '❌ Xoá thất bại: ' + err.message;
     }
 }
 
-function generateForm(jsonData, index) {
+function generateForm(jsonData, formId) {
     let html = '';
     if (!Array.isArray(jsonData)) return html;
     jsonData.forEach(section => {
@@ -865,7 +906,7 @@ function generateForm(jsonData, index) {
         section.child.forEach(field => {
             if (field.type === 'table' && Array.isArray(field.columns)) {
                 // Table with add/remove row buttons
-                const tableId = `${index}_${field.id}`;
+                const tableId = `${formId}_${field.id}`;
                 html += `<div class="form-row"><label>${field.label || ''}</label><table class="dynamic-table" id="${tableId}"><thead><tr>`;
                 field.columns.forEach(col => {
                     html += `<th>${col.header}</th>`;
@@ -883,18 +924,69 @@ function generateForm(jsonData, index) {
                 html += `</td></tr>`;
                 html += `</tbody></table></div>`;
             } else if (field.type === 'select' && Array.isArray(field.options)) {
-                html += `<div class="form-row"><label for="${index}_${field.id}" >${field.label || ''}</label><select id="${index}_${field.id}" name="${index}_${field.id}"${field.required ? ' required' : ''}${field.readonly ? ' disabled' : ''}>`;
+                html += `<div class="form-row"><label for="${formId}_${field.id}" >${field.label || ''}</label><select id="${formId}_${field.id}" name="${formId}_${field.id}"${field.required ? ' required' : ''}${field.readonly ? ' disabled' : ''}>`;
                 field.options.forEach(opt => {
                     html += `<option value="${opt.value}">${opt.text}</option>`;
                 });
                 html += `</select></div>`;
             } else {
-                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" id="${index}_${field.id}" name="${index}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
+                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
             }
         });
         html += `</fieldset>`;
     });
     return html;
+}
+
+function saveFormData(formId) {
+    let dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
+    let form = JSON.parse(dossierDetail.files.find(f => f.id === formId).form || '[]');
+    let formData = {}
+    form.forEach(section => {
+        section.child.forEach(field => {
+            if (field.type === 'table') {
+                const tableId = `${formId}_${field.id}`;
+                const table = document.getElementById(tableId);
+                if (table) {
+                    const rows = table.querySelectorAll('tbody tr');
+                    formData[field.id] = [];
+                    rows.forEach(row => {
+                        const rowData = {};
+                        field.columns.forEach((col, idx) => {
+                            const input = row.querySelectorAll('td input')[idx];
+                            if (input) rowData[col.field] = input.value;
+                        });
+                        formData[field.id].push(rowData);
+                    });
+                }
+            } else if (field.type === 'select') {
+                const select = document.getElementById(`${formId}_${field.id}`);
+                if (select) {
+                    formData[field.id] = select.value;
+                    formData[`${field.id}_text`] = select.options[select.selectedIndex].text;
+                }
+            } else if (field.type === 'date') {
+                const input = document.getElementById(`${formId}_${field.id}`);
+                if (input) {
+                    const [year, month, day] = input.split("-");
+                    const formatted = `${day}/${month}/${year}`;
+                    formData[field.id] = formatted;
+                }
+            } else {
+                const input = document.getElementById(`${formId}_${field.id}`);
+                if (input) formData[field.id] = input.value;
+            }
+        });
+    });
+
+    console.log('Form Data to save:', formData);
+    
+    const modal = document.getElementById('modal-confirm');
+    let spin = document.getElementById('spin-confirm');
+
+    spin.classList.remove('spinning');
+    spin.style.display = 'none';
+    modal.style.display = 'none';
 }
 
 // Add/remove row functions for dynamic tables
@@ -924,3 +1016,55 @@ function removeTableRow(btn) {
     const tbody = tr.parentNode;
     if (tbody.rows.length > 1) tbody.removeChild(tr);
 }
+
+function numberToVietnamese(amount) {
+    if (typeof amount !== "number") amount = parseInt(amount, 10);
+    if (isNaN(amount)) return "";
+
+    const digits = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
+    const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
+
+    function readThreeDigits(num) {
+        let hundred = Math.floor(num / 100);
+        let ten = Math.floor((num % 100) / 10);
+        let unit = num % 10;
+        let result = "";
+
+        if (hundred > 0) {
+            result += digits[hundred] + " trăm";
+            if (ten == 0 && unit > 0) result += " linh";
+        }
+        if (ten > 0 && ten != 1) {
+            result += " " + digits[ten] + " mươi";
+            if (ten > 1 && unit == 1) result += " mốt";
+        } else if (ten == 1) {
+            result += " mười";
+            if (unit == 1) result += " một";
+        }
+        if (unit > 0 && ten != 1 && unit != 1) {
+            if (unit == 5 && ten > 0) result += " lăm";
+            else result += " " + digits[unit];
+        }
+        return result.trim();
+    }
+
+    let index = 0;
+    let result = "";
+    while (amount > 0) {
+        let part = amount % 1000;
+        if (part > 0) {
+            let unitName = units[index];
+            result = readThreeDigits(part) + (unitName ? " " + unitName : "") + " " + result;
+        }
+        amount = Math.floor(amount / 1000);
+        index++;
+    }
+
+    result = result.trim();
+    if (result.length > 0) {
+        result = result.charAt(0).toUpperCase() + result.slice(1);
+    }
+    return result + " đồng";
+}
+
+//end dossier js

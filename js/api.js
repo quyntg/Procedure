@@ -23,6 +23,9 @@ function doGet(e) {
 	} else if (action === "deleteDossierFile") {
 		const id = e.parameter.id;
 		result = JSON.stringify(deleteDossierFile(id));
+	} else if (action === "nextStepDossier") {
+		const dossierId = e.parameter.dossierId;
+		result = JSON.stringify(nextStepDossier(dossierId));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -256,28 +259,54 @@ function getStepsByProcedureId(procedureId) {
 
 function getDossiers(procedure, status) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  var counterSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('counter');
   if (!sheet) {
     return { success: false, message: 'Sheet dossiers không tồn tại.' };
   }
-  var data = sheet.getDataRange().getValues();
-  var headers = data.shift();
+  var dossiersData = sheet.getDataRange().getValues();
+  var counterData = counterSheet.getDataRange().getValues();
+  var headers = dossiersData.shift();
+  var counterHeaders = counterData.shift();
   var procedureIdx = headers.indexOf('procedure');
   var statusIdx = headers.indexOf('status');
-  var result = [];
+  var stepIdStepIdx = counterHeaders.indexOf('stepId');
+  var procedureIdStepIdx = counterHeaders.indexOf('procedureId');
+  var counterStepIdx = counterHeaders.indexOf('counter');
+  var data = {};
+  var dossiers = [];
+  var counter = [];
 
-  for (var i = 0; i < data.length; i++) {
+  for (var i = 0; i < dossiersData.length; i++) {
     if (
-      (procedure === '' || data[i][procedureIdx] == procedure) &&
-      (status === '' || data[i][statusIdx] == status)
+      (procedure === '' || dossiersData[i][procedureIdx] == procedure) &&
+      (status === '' || dossiersData[i][statusIdx] == status)
     ) {
       var row = {};
       for (var j = 0; j < headers.length; j++) {
-        row[headers[j]] = data[i][j];
+        row[headers[j]] = dossiersData[i][j];
       }
-      result.push(row);
+      dossiers.push(row);
     }
   }
-  return result;
+
+  if (procedure === '') {
+    counterData.forEach(row => {
+      if (row[stepIdStepIdx] === status) {
+        procedure = row[procedureIdStepIdx];
+      }
+    });
+  }
+  for (var k = 0; k < counterData.length; k++) {
+    if (counterData[k][procedureIdStepIdx] === procedure) {
+      counter.push({
+        stepId: counterData[k][stepIdStepIdx],
+        counter: counterData[k][counterStepIdx] || 0
+      });
+    }
+  }
+  data['dossiers'] = dossiers;
+  data['counter'] = counter;
+  return data;
 }
 
 function getDossierDetail(id) {
@@ -454,5 +483,50 @@ function deleteDossierFile(id) {
     }
   }
   return { success: false, message: 'Không tìm thấy file với id này.' };
+}
+
+function nextStepDossier(dossierId) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  var stepsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('steps');
+  if (!sheet || !stepsSheet) {
+    return { success: false, message: 'Sheet dossiers hoặc steps không tồn tại.' };
+  }
+  var data = sheet.getDataRange().getValues();
+  var headers = data.shift();
+  var idIdx = headers.indexOf('id');
+  var statusIdx = headers.indexOf('status');
+  var rowIdx = -1;
+  var currentStatus = '';
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][idIdx]) === String(dossierId)) {
+      rowIdx = i + 2; // +2 vì header và index 1-based
+      currentStatus = data[i][statusIdx];
+      break;
+    }
+  }
+  if (rowIdx === -1) {
+    return { success: false, message: 'Không tìm thấy hồ sơ với id này.' };
+  }
+
+  // Tìm next step từ bảng steps
+  var stepsData = stepsSheet.getDataRange().getValues();
+  var stepsHeaders = stepsData.shift();
+  var stepIdIdx = stepsHeaders.indexOf('id');
+  var nextIdx = stepsHeaders.indexOf('next');
+  var nextStep = '';
+  for (var j = 0; j < stepsData.length; j++) {
+    if (String(stepsData[j][stepIdIdx]) === String(currentStatus)) {
+      nextStep = stepsData[j][nextIdx];
+      break;
+    }
+  }
+  if (!nextStep) {
+    return { success: false, message: 'Không tìm thấy bước tiếp theo.' };
+  }
+
+  // Update status của hồ sơ
+  sheet.getRange(rowIdx, statusIdx + 1).setValue(nextStep);
+
+  return { success: true, nextStatus: nextStep };
 }
 
