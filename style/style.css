@@ -14,7 +14,7 @@
 .table-btn:hover {
     background: #bae6fd;
 }
-* {
+#app {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -481,7 +481,7 @@ h2 {
     color: #fff;
     border: none;
     border-radius: 0.5rem;
-    padding: 0.4rem 1.1rem;
+    padding: 0.6rem 1.1rem;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -804,6 +804,29 @@ h2 {
 }
 .dynamic-table tr:last-child td {
     border-bottom: 1px solid #bae6fd;
+}
+
+#modal-preview {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.15);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+#preview-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 24px;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: auto;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
+#preview-actions {
+    margin-top: 18px;
+    text-align: right;
 }
 
 /* Responsive cho bảng động */

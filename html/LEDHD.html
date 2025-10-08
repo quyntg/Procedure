@@ -5,8 +5,8 @@
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>Hợp đồng kinh tế - Hợp đồng màn Led</title>
         <style>
-            body {
-                font-family: "Times New Roman", Times, serif;
+            .ledhd-content {
+                font-family: "Times New Roman", Times, serif !important;
                 line-height: 1.5;
                 color: #111;
                 padding: 30px 40px;
@@ -16,239 +16,258 @@
                 font-size: 13px;
             }
 
-            header {
+            .ledhd-content header {
                 text-align: center;
                 margin-bottom: 20px;
             }
 
-            h1 {
+            .ledhd-content h1 {
                 font-size: 16px;
                 margin: 6px 0;
             }
 
-            .small {
+            .ledhd-content .small {
                 font-size: 13px;
                 font-weight: bold;
             }
 
-            .center {
+            .ledhd-content .center {
                 text-align: center;
             }
 
-            .right {
+            .ledhd-content .right {
                 text-align: right;
             }
 
-            p, ul, ol {
+            .ledhd-content p, ul, ol {
                 margin: 8px 16px 0 16px;
                 text-align: justify;
             }
 
-            table {
+            .ledhd-content table {
                 width: 100%;
                 border-collapse: collapse;
                 margin: 12px 0;
             }
 
-            table td:not(:nth-child(2)) {
+            .ledhd-content table td:not(:nth-child(2)) {
                 text-align: center;
             }
 
-            table, th, td {
+            .ledhd-content table, th, td {
                 border: 1px solid #333;
             }
 
-            th, td {
+            .ledhd-content th, td {
                 padding: 8px;
                 vertical-align: top;
             }
 
-            th {
+            .ledhd-content th {
                 background: #f1f1f1;
             }
 
-            .no-border {
+            .ledhd-content .no-border {
                 border: 0;
             }
 
-            .signature {
+            .ledhd-content .signature {
                 margin-top: 40px;
                 display: flex;
                 justify-content: space-between;
             }
 
-            .sig-box {
+            .ledhd-content .sig-box {
                 text-align: center;
                 width: 50%;
             }
 
-            .muted {
+            .ledhd-content .muted {
                 font-style: italic;
             }
 
-            .muted span {
+            .ledhd-content .muted span {
                 margin-left: 20px;
             }
 
-            .section-title {
+            .ledhd-content .section-title {
                 font-weight: 600;
-                margin-top: 18px;
+                margin-top: 6px;
+            }
+
+            /* Thêm vào <style> của LEDHD.html hoặc modal */
+            .preview-html, .ledhd-content, .record-detail-container, .dynamic-table, fieldset, legend, .form-row, table, tr, td, th {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                /* Nếu bảng bị cắt ngang, thêm: */
+                page-break-before: auto !important;
+                page-break-after: auto !important;
+            }
+
+            /* Giảm lỗi thêm trang trắng */
+            .ledhd-content body, html {
+                margin: 0;
+                padding: 0;
+                background: #fff;
+            }
+
+            tr, td, th {
+                break-inside: avoid !important;
             }
 
             @media print {
-                body {
+                .ledhd-content body {
                     padding: 10mm 15mm;
                     background: #fff;
                 }
-                .signature {
+                .ledhd-content .signature {
                     page-break-inside: avoid;
                 }
-                table, th, td {
+                .ledhd-content table, th, td {
                     page-break-inside: avoid;
                 }
             }
         </style>
     </head>
     <body>
-        <header>
-            <div class="center small">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-            <div class="center small">Độc lập – Tự do – Hạnh phúc</div>
-            <div class="center" style="margin: 2px 0 10px 0;">
-                <span style="display: inline-block; border-bottom: 1.5px solid #222; width: 15%; margin-top:2px;"></span><br>
-            </div>
-            <h1>HỢP ĐỒNG KINH TẾ</h1>
-            <div class="center small">Số: <span id="soHopDong"></span></div>
-        </header>
-        <p class="muted">-<span> Căn cứ vào Bộ Luật dân sự số 91/2015/QH13 ngày 24/11/2015;</span></p>
-        <p class="muted">-<span> Căn cứ Luật Thương mại số 36/2005/QH 11 do Quốc hội nước Cộng hoà xã hội chủ nghĩa Việt Nam ban hành ngày 14 tháng 6 năm 2005.</span></p>
-        <p class="muted">-<span> Căn cứ nhu cầu và năng lực của hai bên;</span></p>
-        </br>
-        <p>Hôm nay, <span id="ngayHopDong"></span>, tại <span id="diaChiCongTy"></span>, chúng tôi gồm:</p>
-        <p><strong>BÊN A (Bên mua): <span id="hoTenKhachHang" style="text-transform: uppercase;"></span></strong></p>
-        <p>Địa chỉ: <span id="diaChiKhachHang"></span></p>
-        <p>Mã số thuế: <span id="maSoThue"></span></p>
-        <p>Đại diện: Ông/Bà: <span id="daiDienKhachHang"></span> &nbsp;&nbsp;&nbsp; Chức vụ: <span id="chucVuDaiDien"></span></p>
-        <p>Số tài khoản: <span id="soTaiKhoanKhachHang"></span></p>
-        <p><strong>BÊN B (Bên bán): CÔNG TY CỔ PHẦN TRUYỀN THÔNG SỐ ADVTV</strong></p>
-        <p>Địa chỉ: 652 Trịnh Kiểm, Đại lộ Đông Tây, Phường Đông Quang, Thanh Hóa</p>
-        <p>Mã số thuế: 2802923278</p>
-        <p>Đại diện: Ông Nguyễn Hữu Thế &nbsp;&nbsp;&nbsp; Chức vụ: Giám đốc</p>
-        <p>Tài khoản nhận thanh toán: 3661122168888</p>
-        <p>Tại Ngân hàng: MBBank - Ngân hàng thương mại cổ phần Quân đội chi nhánh Thanh Hóa</p>
-        <p>Tên tài khoản: Công ty Cổ phần Truyền thông số ADVTV (Hoặc ADVTV.JSC)</p>
-        <p>Hai bên thống nhất chấp thuận và ký kết nội dung Hợp đồng như sau:</p>
-        <p><strong>Điều 1. Đối tượng hợp đồng</strong></p>
-        <p>Bên A đồng ý mua và bên B đồng ý cung cấp vật tư và lắp đặt màn hình led theo danh mục được liệt kê dưới đây:</p>
-        <table id="bangKeThietBi">
-            <thead>
+        <div>
+            <header>
+                <div class="center small">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="center small">Độc lập – Tự do – Hạnh phúc</div>
+                <div class="center" style="margin: 2px 0 10px 0;">
+                    <span style="display: inline-block; border-bottom: 1.5px solid #222; width: 15%; margin-top:2px;"></span><br>
+                </div>
+                <h1>HỢP ĐỒNG KINH TẾ</h1>
+                <div class="center small">Số: <span id="soHopDong"></span></div>
+            </header>
+            <p class="muted">-<span> Căn cứ vào Bộ Luật dân sự số 91/2015/QH13 ngày 24/11/2015;</span></p>
+            <p class="muted">-<span> Căn cứ Luật Thương mại số 36/2005/QH 11 do Quốc hội nước Cộng hoà xã hội chủ nghĩa Việt Nam ban hành ngày 14 tháng 6 năm 2005.</span></p>
+            <p class="muted">-<span> Căn cứ nhu cầu và năng lực của hai bên;</span></p>
+            </br>
+            <p>Hôm nay, <span id="ngayHopDong"></span>, tại <span id="diaChiCongTy"></span>, chúng tôi gồm:</p>
+            <p><strong>BÊN A (Bên mua): <span id="hoTenKhachHang" style="text-transform: uppercase;"></span></strong></p>
+            <p>Địa chỉ: <span id="diaChiKhachHang"></span></p>
+            <p>Mã số thuế: <span id="maSoThue"></span></p>
+            <p>Đại diện: Ông/Bà: <span id="daiDienKhachHang"></span> &nbsp;&nbsp;&nbsp; Chức vụ: <span id="chucVuDaiDien"></span></p>
+            <p>Số tài khoản: <span id="soTaiKhoanKhachHang"></span></p>
+            <p><strong>BÊN B (Bên bán): CÔNG TY CỔ PHẦN TRUYỀN THÔNG SỐ ADVTV</strong></p>
+            <p>Địa chỉ: 652 Trịnh Kiểm, Đại lộ Đông Tây, Phường Đông Quang, Thanh Hóa</p>
+            <p>Mã số thuế: 2802923278</p>
+            <p>Đại diện: Ông Nguyễn Hữu Thế &nbsp;&nbsp;&nbsp; Chức vụ: Giám đốc</p>
+            <p>Tài khoản nhận thanh toán: 3661122168888</p>
+            <p>Tại Ngân hàng: MBBank - Ngân hàng thương mại cổ phần Quân đội chi nhánh Thanh Hóa</p>
+            <p>Tên tài khoản: Công ty Cổ phần Truyền thông số ADVTV (Hoặc ADVTV.JSC)</p>
+            <p>Hai bên thống nhất chấp thuận và ký kết nội dung Hợp đồng như sau:</p>
+            <p><strong>Điều 1. Đối tượng hợp đồng</strong></p>
+            <p>Bên A đồng ý mua và bên B đồng ý cung cấp vật tư và lắp đặt màn hình led theo danh mục được liệt kê dưới đây:</p>
+            <table id="bangKeThietBi">
+                <thead>
+                    <tr>
+                        <th rowspan="2">TT</th>
+                        <th rowspan="2">Hạng mục<br>(Tên thiết bị)</th>
+                        <th rowspan="2">ĐVT</th>
+                        <th colspan="2">Kích thước<br>(mm)</th>
+                        <th rowspan="2">Tổng<br>khối<br>lượng</th>
+                        <th rowspan="2">Thành tiền</th>
+                    </tr>
+                    <tr>
+                        <th>Rộng</th>
+                        <th>Cao<br>(sâu)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
                 <tr>
-                    <th rowspan="2">TT</th>
-                    <th rowspan="2">Hạng mục<br>(Tên thiết bị)</th>
-                    <th rowspan="2">ĐVT</th>
-                    <th colspan="2">Kích thước<br>(mm)</th>
-                    <th rowspan="2">Tổng<br>khối<br>lượng</th>
-                    <th rowspan="2">Thành tiền</th>
+                    <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>TỔNG</strong></td>
+                    <td style="text-align: center;"><span id="tongDonGia"></span></td>
                 </tr>
                 <tr>
-                    <th>Rộng</th>
-                    <th>Cao<br>(sâu)</th>
+                    <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>THUẾ VAT <span id="vat"></span></strong></td>
+                    <td style="text-align: center;"><span id="tongThue"></span></td>
                 </tr>
-            </thead>
-            <tbody>
-            </tbody>
-            <tr>
-                <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>TỔNG</strong></td>
-                <td style="text-align: center;"><span id="tongDonGia"></span></td>
-            </tr>
-            <tr>
-                <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>THUẾ VAT <span id="vat"></span></strong></td>
-                <td style="text-align: center;"><span id="tongThue"></span></td>
-            </tr>
-            <tr>
-                <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>TỔNG THANH TOÁN</strong></td>
-                <td style="text-align: center;"><span id="tongThanhToan"></span></td>
-            </tr>
-        </table>
-        <p><strong>Điều 2. Giá trị hợp đồng, thời gian, hình thức thanh toán và thực hiện hợp đồng</strong></p>
-        <p>2.1. Giá trị hợp đồng:<strong> <span id="giaTriHopDong"></span></strong><br> (Bằng chữ: <span id="giaTriHopDongBangChu"></span>./.)</p>
-        <p>2.2. Địa điểm lắp đặt: <span id="diaDiemLapDat"></span>.</p>
-        <p>2.3. Hình thức hợp đồng: Trọn gói.<br> - Giá trên là giá trọn gói, đã bao gồm chi phí vận chuyển lắp đặt, vận hành chạy thử, chi phí hướng dẫn sử dụng, đào tạo và bảo hành tại địa điểm bàn giao</p>
-        <p>2.4. Thời gian thực hiện Hợp đồng: Trong vòng <span id="thoiGianThucHien"></span> ngày kể từ ngày hợp đồng có hiệu lực.<br> Thời hạn nghiệm thu: Không quá <span id="thoiGianNghiemThu"></span> ngày kể từ khi Bên B bàn giao thành phẩm và đưa ra đề nghị tiến hành nghiệm thu.</p>
-        <p>2.5. Hình thức thanh toán: Chuyển khoản tiền VNĐ.</p>
-        <p>2.6. Số lần thanh toán: Thanh toán <span id="soLanThanhToan"></span> lần:</p>
-        <p>
-            <span>+ Lần 1: Bên A thanh toán tạm ứng cho bên B số tiền: <strong>150.000.000 đ</strong> (Bằng chữ: Một trăm năm mươi triệu đồng), ngay sau khi ký kết hợp đồng.</span><br>
-            <span>+ Lần 2: Bên A thanh toán cho bên B số tiền còn lại là: <strong>50.000.000 đ</strong> (Bằng chữ: Năm mươi triệu đồng) sau khi lắp đặt và bàn giao dự án.</span><br>
-        </p>
-        <p>- Thời hạn thanh toán: Không quá <span id="thoiHanThanhToan"></span> ngày kể từ khi hai bên nghiệm thu công trình.</p>
-        <p>- Chậm tiến độ nghiệm thu và thanh toán, ảnh hưởng đến tiến độ chung của hợp đồng thì bị phạt không quá 10% giá trị hợp đồng, số tiền chậm thanh toán sẽ được tính lãi suất theo lãi suất tiền vay tại Ngân hàng Thương mại cổ phần Việt Nam Thịnh Vượng (VP Bank).</p>
-        <p>2.7. Khi bên A chưa hoàn tất nghĩa vụ thanh toán thì mọi tài sản, vật tư, hàng hóa mà bên B bàn giao cho bên A vẫn thuộc quyền quyết định, sở hữu và định đoạt của bên B.</p>
-        <p><strong>Điều 3. Trách nhiệm của hai Bên</strong></p>
-        <p><strong>1. Trách nhiệm của Bên A:</strong></p>
-        <p>
-            <span>Bên A cam kết thanh toán cho Bên B đúng thời hạn.</span><br>
-            <span>Bên A phải tuân thủ các phương thức thanh toán, thực hiện việc thanh toán theo trình tự, thủ tục đã thỏa thuận và theo quy định của pháp luật.</span><br>
-            <span>Bên A phải tổ chức nghiệm thu trước khi lắp đặt, nghiệm thu tổng thể tiếp nhận hàng hóa, thiết bị, an toàn và nhanh gọn theo thời gian và địa điểm mà hai bên đã thỏa thuận.</span><br>
-            <span>Bên A phải có trách nhiệm phối hợp với bên B việc trông coi, bảo quản tài sản, thiết bị, hàng hóa trong quá trình thực hiện hợp đồng. Trường hợp để xảy ra các tình huống như mất cắp, cố ý phá hoại thì phải chịu trách nhiệm.</span><br>
-            <span>Tạo mọi điều kiện thuận lợi về mặt bằng, nguồn điện an toàn, hợp tác cùng bên B để thực hiện triển khai các nội dung của hợp đồng.</span><br>
-            <span>Bên A có quyền kiểm tra hàng ngày hoặc đột xuất với các thiết bị, vật dụng mà Bên B sử dụng trong quá trình triển khai lắp đặt.</span>
-        </p>
-        <p><strong>2. Trách nhiệm của Bên B:</strong></p>
-        <p>
-            <span>Bên B cam kết cung cấp cho Bên A đầy đủ các loại hàng hóa theo hợp đồng.</span><br>
-            <span>Bên B chịu trách nhiệm về số lượng, chất lượng đối với toàn bộ các sản phẩm do Bên B cung cấp lắp đặt cho tới khi hàng được bàn giao cho bên A theo quy định.</span><br>
-            <span>Bên B có nghĩa vụ cung cấp các chỉ dẫn cần thiết đối với việc bảo quản, chuyển giao công nghệ theo quy định của Hợp đồng này cho Bên A.</span><br>
-            <span>Bên thi công lắp đặt có nghĩa vụ đảm bảo hàng hóa là đối tượng của hợp đồng không phải hàng hóa vi phạm quyền sở hữu trí tuệ và phải chịu trách nhiệm trong trường hợp có tranh chấp liên quan đến quyền sở hữu trí tuệ đối với hàng hóa đã bán trừ trường hợp hàng hóa được sản xuất, chế tạo, chế biến theo công thức, bản vẽ, thông số kỹ thuật chi tiết do bên mua cung cấp, trường hợp này bên mua phải chịu trách nhiệm nếu có khiếu nại khiếu kiện liên quan đến hàng hóa.</span>
-        </p>
-        <p><strong>Điều 4. Hiệu chỉnh, bổ sung hợp đồng</strong></p>
-        <p>4.1. Việc hiệu chỉnh, bổ sung hợp đồng có thể được thực hiện trong các trường hợp sau:</p>
-        <p>
-            <span>Trường hợp bất khả kháng, không liên quan đến vi phạm của các bên tham gia hợp đồng;</span><br>
-            <span>Trường hợp điều chỉnh tiến độ thực hiện hợp đồng mà không làm kéo dài tiến độ hoàn thành dự án thì các bên tham gia hợp đồng thỏa thuận, thống nhất việc điều chỉnh. Trường hợp điều chỉnh tiến độ thực hiện hợp đồng làm kéo dài tiến độ hoàn thành dự án thì phải báo cáo người có thẩm quyền xem xét, quyết định.</span>
-        </p>
-        <p>4.2. Trường hợp phát sinh các hạng mục công việc ngoài phạm vi hợp đồng, Bên A và Bên B sẽ tiến hành thương thảo để làm cơ sở ký kết phụ lục bổ sung hợp đồng.</p>
-        <p>4.3. Các bảng báo giá, biên bản và giấy tờ khác được kiến tạo từ hợp đồng này là một phần không thể tách rời của hợp đồng.</p>
-        <p><strong>Điều 5. Tính hợp lệ của hàng hóa</strong></p>
-        <p>Bên B phải cung cấp và nêu rõ xuất xứ của hàng hóa; ký mã hiệu, nhãn mác của sản phẩm và các tài liệu kèm theo để chứng minh tính hợp lệ của hàng hóa và phải tuân thủ các quy định về tiêu chuẩn hiện hành tại quốc gia hoặc vùng lãnh thổ mà hàng hóa có xuất xứ.</p>
-        <p><strong>Điều 6. Cung cấp, vận chuyển, kiểm tra và lắp đặt thử nghiệm hàng hóa</strong></p>
-        <p>
-            <span>Bên B chịu trách nhiệm cung cấp sản phẩm, hàng hóa theo hợp đồng và phải đảm bảo tiến độ mà hai bên đã ký kết.</span><br>
-            <span>Yêu cầu về vận chuyển hàng hóa: Việc vận chuyển hàng hóa lắp đặt, các dịch vụ do bên B chịu trách nhiệm. Bên A chỉ tiếp nhận và đưa vào sử dụng sau khi tất cả đã được hoạt động tốt.</span><br>
-            <span>Bên A hoặc đại diện của Bên A có quyền kiểm tra, thử nghiệm hàng hóa được cung cấp để đảm bảo hàng hóa đó có đặc tính kỹ thuật phù hợp với yêu cầu của hợp đồng. Thời gian, địa điểm và cách thức tiến hành kiểm tra, thử nghiệm: Tại hiện trường. Trường hợp hàng hóa không phù hợp với đặc tính kỹ thuật theo hợp đồng thì Bên A có quyền từ chối và Bên B phải có trách nhiệm cung cấp hàng hóa đúng yêu cầu về đặc tính kỹ thuật trong hợp đồng.</span>
-        </p>
-        <p><strong>Điều 7. Bản quyền và pháp lý</strong></p>
-        <p>Bên B phải hoàn toàn chịu trách nhiệm về mọi thiệt hại phát sinh do việc khiếu nại của bên thứ ba về việc vi phạm bản quyền sở hữu trí tuệ hoặc các vấn đề pháp lý liên quan đến hàng hóa mà Bên B đã cung cấp cho Bên A.</p>
-        <p><strong>Điều 8. Bảo hành</strong></p>
-        <p>
-            <span>Bên B bảo đảm rằng hàng hóa được cung cấp theo hợp đồng là mới còn nguyên đai nguyên kiện, chưa sử dụng, đảm bảo chất lượng theo tiêu chuẩn chế tạo và sẽ không có các khuyết tật nảy sinh dẫn đến bất lợi trong quá trình sử dụng hàng hóa.</span><br>
-            <span>Bảo hành <span id="baoHanh"></span> theo tiêu chuẩn nhà sản xuất, tính từ ngày bàn giao nghiệm thu công trình.</span><br>
-            <span>Công ty cam kết vẫn hỗ trợ kỹ thuật trong thời gian sau khi kết thúc bảo hành.</span><br>
-            <span>Khi có sự cố xảy ra bên A báo cho bên B trong vòng <span id="thoiGianXulySuCo"></span> giờ bên B phải cho người khắc phục sửa chữa.</span>
-        </p>
-        <p><strong>Điều 9. Giải quyết tranh chấp</strong></p>
-        <p>
-            <span>Bên A và Bên B có trách nhiệm giải quyết các tranh chấp phát sinh giữa hai bên thông qua thương lượng, hòa giải.</span><br>
-            <span>Trong trường hợp không thể giải quyết được bất đồng thì sẽ đưa ra Tòa án kinh tế tỉnh Thanh Hóa giải quyết. Phán quyết của Tòa án kinh tế Thanh Hóa là bắt buộc cho các bên.</span><br>
-            <span>Toàn bộ chi phí giải quyết do bên thua kiện chi trả.</span>
-        </p>
-        <p><strong>Điều 10. Hiệu lực hợp đồng</strong></p>
-        <p>1. Hợp đồng có hiệu lực kể từ ngày bên B nhận được tiền tạm ứng.</p>
-        <p>2. Hợp đồng tự động thanh lý khi bên A thanh toán đầy đủ cho bên B.</p>
-        <p>Hợp đồng được lập thành 04 (bốn) bộ, mỗi bên giữ 02 (hai) bộ, các bộ hợp đồng có giá trị pháp lý như nhau.</p>
-        <div class="signature">
-            <div class="sig-box">
-                <span><strong>ĐẠI DIỆN BÊN A</strong></span>
-                <!-- <br><span style="margin-top: 60px">(Ký, ghi rõ họ tên)</span> -->
+                <tr>
+                    <td class="no-border" colspan="6" style="text-align: center; border: 1px solid #333;"><strong>TỔNG THANH TOÁN</strong></td>
+                    <td style="text-align: center;"><span id="tongThanhToan"></span></td>
+                </tr>
+            </table>
+            <p><strong>Điều 2. Giá trị hợp đồng, thời gian, hình thức thanh toán và thực hiện hợp đồng</strong></p>
+            <p>2.1. Giá trị hợp đồng:<strong> <span id="giaTriHopDong"></span></strong><br> (Bằng chữ: <span id="giaTriHopDongBangChu"></span>./.)</p>
+            <p>2.2. Địa điểm lắp đặt: <span id="diaDiemLapDat"></span>.</p>
+            <p>2.3. Hình thức hợp đồng: Trọn gói.<br> - Giá trên là giá trọn gói, đã bao gồm chi phí vận chuyển lắp đặt, vận hành chạy thử, chi phí hướng dẫn sử dụng, đào tạo và bảo hành tại địa điểm bàn giao</p>
+            <p>2.4. Thời gian thực hiện Hợp đồng: Trong vòng <span id="thoiGianThucHien"></span> ngày kể từ ngày hợp đồng có hiệu lực.<br> Thời hạn nghiệm thu: Không quá <span id="thoiGianNghiemThu"></span> ngày kể từ khi Bên B bàn giao thành phẩm và đưa ra đề nghị tiến hành nghiệm thu.</p>
+            <p>2.5. Hình thức thanh toán: Chuyển khoản tiền VNĐ.</p>
+            <p>2.6. Số lần thanh toán: Thanh toán <span id="soLanThanhToan_text"></span> lần:</p>
+            <p><span id="soLanThanhToan"></span></p>
+            <p>- Thời hạn thanh toán: Không quá <span id="thoiHanThanhToan"></span> ngày kể từ khi hai bên nghiệm thu công trình.</p>
+            <p>- Chậm tiến độ nghiệm thu và thanh toán, ảnh hưởng đến tiến độ chung của hợp đồng thì bị phạt không quá 10% giá trị hợp đồng, số tiền chậm thanh toán sẽ được tính lãi suất theo lãi suất tiền vay tại Ngân hàng Thương mại cổ phần Việt Nam Thịnh Vượng (VP Bank).</p>
+            <p>2.7. Khi bên A chưa hoàn tất nghĩa vụ thanh toán thì mọi tài sản, vật tư, hàng hóa mà bên B bàn giao cho bên A vẫn thuộc quyền quyết định, sở hữu và định đoạt của bên B.</p>
+            <p><strong>Điều 3. Trách nhiệm của hai Bên</strong></p>
+            <p><strong>1. Trách nhiệm của Bên A:</strong></p>
+            <p>
+                <span>Bên A cam kết thanh toán cho Bên B đúng thời hạn.</span><br>
+                <span>Bên A phải tuân thủ các phương thức thanh toán, thực hiện việc thanh toán theo trình tự, thủ tục đã thỏa thuận và theo quy định của pháp luật.</span><br>
+                <span>Bên A phải tổ chức nghiệm thu trước khi lắp đặt, nghiệm thu tổng thể tiếp nhận hàng hóa, thiết bị, an toàn và nhanh gọn theo thời gian và địa điểm mà hai bên đã thỏa thuận.</span><br>
+                <span>Bên A phải có trách nhiệm phối hợp với bên B việc trông coi, bảo quản tài sản, thiết bị, hàng hóa trong quá trình thực hiện hợp đồng. Trường hợp để xảy ra các tình huống như mất cắp, cố ý phá hoại thì phải chịu trách nhiệm.</span><br>
+                <span>Tạo mọi điều kiện thuận lợi về mặt bằng, nguồn điện an toàn, hợp tác cùng bên B để thực hiện triển khai các nội dung của hợp đồng.</span><br>
+                <span>Bên A có quyền kiểm tra hàng ngày hoặc đột xuất với các thiết bị, vật dụng mà Bên B sử dụng trong quá trình triển khai lắp đặt.</span>
+            </p>
+            <p><strong>2. Trách nhiệm của Bên B:</strong></p>
+            <p>
+                <span>Bên B cam kết cung cấp cho Bên A đầy đủ các loại hàng hóa theo hợp đồng.</span><br>
+                <span>Bên B chịu trách nhiệm về số lượng, chất lượng đối với toàn bộ các sản phẩm do Bên B cung cấp lắp đặt cho tới khi hàng được bàn giao cho bên A theo quy định.</span><br>
+                <span>Bên B có nghĩa vụ cung cấp các chỉ dẫn cần thiết đối với việc bảo quản, chuyển giao công nghệ theo quy định của Hợp đồng này cho Bên A.</span><br>
+                <span>Bên thi công lắp đặt có nghĩa vụ đảm bảo hàng hóa là đối tượng của hợp đồng không phải hàng hóa vi phạm quyền sở hữu trí tuệ và phải chịu trách nhiệm trong trường hợp có tranh chấp liên quan đến quyền sở hữu trí tuệ đối với hàng hóa đã bán trừ trường hợp hàng hóa được sản xuất, chế tạo, chế biến theo công thức, bản vẽ, thông số kỹ thuật chi tiết do bên mua cung cấp, trường hợp này bên mua phải chịu trách nhiệm nếu có khiếu nại khiếu kiện liên quan đến hàng hóa.</span>
+            </p>
+            <p><strong>Điều 4. Hiệu chỉnh, bổ sung hợp đồng</strong></p>
+            <p>4.1. Việc hiệu chỉnh, bổ sung hợp đồng có thể được thực hiện trong các trường hợp sau:</p>
+            <p>
+                <span>Trường hợp bất khả kháng, không liên quan đến vi phạm của các bên tham gia hợp đồng;</span><br>
+                <span>Trường hợp điều chỉnh tiến độ thực hiện hợp đồng mà không làm kéo dài tiến độ hoàn thành dự án thì các bên tham gia hợp đồng thỏa thuận, thống nhất việc điều chỉnh. Trường hợp điều chỉnh tiến độ thực hiện hợp đồng làm kéo dài tiến độ hoàn thành dự án thì phải báo cáo người có thẩm quyền xem xét, quyết định.</span>
+            </p>
+            <p>4.2. Trường hợp phát sinh các hạng mục công việc ngoài phạm vi hợp đồng, Bên A và Bên B sẽ tiến hành thương thảo để làm cơ sở ký kết phụ lục bổ sung hợp đồng.</p>
+            <p>4.3. Các bảng báo giá, biên bản và giấy tờ khác được kiến tạo từ hợp đồng này là một phần không thể tách rời của hợp đồng.</p>
+            <p><strong>Điều 5. Tính hợp lệ của hàng hóa</strong></p>
+            <p>Bên B phải cung cấp và nêu rõ xuất xứ của hàng hóa; ký mã hiệu, nhãn mác của sản phẩm và các tài liệu kèm theo để chứng minh tính hợp lệ của hàng hóa và phải tuân thủ các quy định về tiêu chuẩn hiện hành tại quốc gia hoặc vùng lãnh thổ mà hàng hóa có xuất xứ.</p>
+            <p><strong>Điều 6. Cung cấp, vận chuyển, kiểm tra và lắp đặt thử nghiệm hàng hóa</strong></p>
+            <p>
+                <span>Bên B chịu trách nhiệm cung cấp sản phẩm, hàng hóa theo hợp đồng và phải đảm bảo tiến độ mà hai bên đã ký kết.</span><br>
+                <span>Yêu cầu về vận chuyển hàng hóa: Việc vận chuyển hàng hóa lắp đặt, các dịch vụ do bên B chịu trách nhiệm. Bên A chỉ tiếp nhận và đưa vào sử dụng sau khi tất cả đã được hoạt động tốt.</span><br>
+                <span>Bên A hoặc đại diện của Bên A có quyền kiểm tra, thử nghiệm hàng hóa được cung cấp để đảm bảo hàng hóa đó có đặc tính kỹ thuật phù hợp với yêu cầu của hợp đồng. Thời gian, địa điểm và cách thức tiến hành kiểm tra, thử nghiệm: Tại hiện trường. Trường hợp hàng hóa không phù hợp với đặc tính kỹ thuật theo hợp đồng thì Bên A có quyền từ chối và Bên B phải có trách nhiệm cung cấp hàng hóa đúng yêu cầu về đặc tính kỹ thuật trong hợp đồng.</span>
+            </p>
+            <p><strong>Điều 7. Bản quyền và pháp lý</strong></p>
+            <p>Bên B phải hoàn toàn chịu trách nhiệm về mọi thiệt hại phát sinh do việc khiếu nại của bên thứ ba về việc vi phạm bản quyền sở hữu trí tuệ hoặc các vấn đề pháp lý liên quan đến hàng hóa mà Bên B đã cung cấp cho Bên A.</p>
+            <p><strong>Điều 8. Bảo hành</strong></p>
+            <p>
+                <span>Bên B bảo đảm rằng hàng hóa được cung cấp theo hợp đồng là mới còn nguyên đai nguyên kiện, chưa sử dụng, đảm bảo chất lượng theo tiêu chuẩn chế tạo và sẽ không có các khuyết tật nảy sinh dẫn đến bất lợi trong quá trình sử dụng hàng hóa.</span><br>
+                <span>Bảo hành <span id="baoHanh"></span> theo tiêu chuẩn nhà sản xuất, tính từ ngày bàn giao nghiệm thu công trình.</span><br>
+                <span>Công ty cam kết vẫn hỗ trợ kỹ thuật trong thời gian sau khi kết thúc bảo hành.</span><br>
+                <span>Khi có sự cố xảy ra bên A báo cho bên B trong vòng <span id="thoiGianXulySuCo"></span> giờ bên B phải cho người khắc phục sửa chữa.</span>
+            </p>
+            <p><strong>Điều 9. Giải quyết tranh chấp</strong></p>
+            <p>
+                <span>Bên A và Bên B có trách nhiệm giải quyết các tranh chấp phát sinh giữa hai bên thông qua thương lượng, hòa giải.</span><br>
+                <span>Trong trường hợp không thể giải quyết được bất đồng thì sẽ đưa ra Tòa án kinh tế tỉnh Thanh Hóa giải quyết. Phán quyết của Tòa án kinh tế Thanh Hóa là bắt buộc cho các bên.</span><br>
+                <span>Toàn bộ chi phí giải quyết do bên thua kiện chi trả.</span>
+            </p>
+            <p><strong>Điều 10. Hiệu lực hợp đồng</strong></p>
+            <p>1. Hợp đồng có hiệu lực kể từ ngày bên B nhận được tiền tạm ứng.</p>
+            <p>2. Hợp đồng tự động thanh lý khi bên A thanh toán đầy đủ cho bên B.</p>
+            <p>Hợp đồng được lập thành 04 (bốn) bộ, mỗi bên giữ 02 (hai) bộ, các bộ hợp đồng có giá trị pháp lý như nhau.</p>
+            <div class="signature">
+                <div class="sig-box">
+                    <span><strong>ĐẠI DIỆN BÊN A</strong></span>
+                    <!-- <br><span style="margin-top: 60px">(Ký, ghi rõ họ tên)</span> -->
+                </div>
+                <div class="sig-box">
+                    <span><strong>ĐẠI DIỆN BÊN B</strong></span>
+                    <!-- <br><span style="margin-top: 60px">(Ký, ghi rõ họ tên)</span> -->
+                </div>
             </div>
-            <div class="sig-box">
-                <span><strong>ĐẠI DIỆN BÊN B</strong></span>
-                <!-- <br><span style="margin-top: 60px">(Ký, ghi rõ họ tên)</span> -->
-            </div>
-        </div>
-    </body>
+        </body>
+    </div>
 </html>
 <script>
-    var formData = {
+    var ledhdFormData = {
         "soHopDong": "HD001",
         "ngayHopDong": "07/10/2025",
         "diaChiCongTy": "125126",
@@ -278,6 +297,24 @@
                 "cao": "2",
                 "tong": "2",
                 "tien": "2"
+            },
+            {
+                "tt": "3",
+                "ten": "3",
+                "dvt": "3",
+                "rong": "3",
+                "cao": "3",
+                "tong": "3",
+                "tien": "3"
+            },
+            {
+                "tt": "4",
+                "ten": "4",
+                "dvt": "4",
+                "rong": "4",
+                "cao": "4",
+                "tong": "4",
+                "tien": "4"
             }
         ],
         "tongDonGia": "10000000",
@@ -291,11 +328,13 @@
         "soLanThanhToan": [
             {
                 "tien": "1111111111",
-                "chu": "222333333333"
+                "chu": "222333333333",
+                "dieukien": "ngay sau khi ký kết hợp đồng"
             },
             {
                 "tien": "2222222222",
-                "chu": "3444444444"
+                "chu": "3444444444",
+                "dieukien": "sau khi lắp đặt và bàn giao dự án"
             }
         ],
         "thoiHanThanhToan": "12",
@@ -304,294 +343,356 @@
         "thoiGianXulySuCo": "10"
     }
 
-    let form = [{
-        "id": "phan1",
-        "title": "I. Thông tin hợp đồng",
-        "child": [{
-            "id": "soHopDong",
-            "label": "Số hợp đồng: ",
-            "type": "text",
-            "placeholder": "Nhập số hợp đồng",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "ngayHopDong",
-            "label": "Ngày hợp đồng: ",
-            "type": "date",
-            "placeholder": "Chọn ngày hợp đồng",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "diaChiCongTy",
-            "label": "Địa chỉ công ty: ",
-            "type": "text",
-            "placeholder": "Nhập địa chỉ công ty",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }]
-    }, {
-        "id": "phan2",
-        "title": "II. Thông tin khách hàng",
-        "child": [{
-            "id": "hoTenKhachHang",
-            "label": "Họ tên khách hàng: ",
-            "type": "text",
-            "placeholder": "Nhập số hợp đồng",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "diaChiKhachHang",
-            "label": "Địa chỉ khách hàng: ",
-            "type": "text",
-            "placeholder": "Nhập địa chỉ khách hàng",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "maSoThue",
-            "label": "Mã số thuế: ",
-            "type": "text",
-            "placeholder": "Nhập mã số thuế",
-            "required": true,
-            "pattern": "^[0-9]{10}$",
-            "readonly": false
-        }, {
-            "id": "daiDienKhachHang",
-            "label": "Đại diện khách hàng: ",
-            "type": "text",
-            "placeholder": "Nhập đại diện khách hàng",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "chucVuDaiDien",
-            "label": "Chức vụ: ",
-            "type": "text",
-            "placeholder": "Nhập chức vụ đại diện",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "soTaiKhoanKhachHang",
-            "label": "Số tài khoản: ",
-            "type": "text",
-            "placeholder": "Nhập số tài khoản",
-            "required": false,
-            "pattern": "",
-            "readonly": false
-        }]
-    }, {
-        "id": "phan3",
-        "title": "III. Thông tin thiết bị",
-        "child": [{
-            "id": "vat",
-            "label": "VAT: ",
-            "type": "select",
-            "placeholder": "",
-            "required": true,
-            "options": [{
-                "value": "0",
-                "text": "Chọn mức VAT"
-            }, {
-                "value": "5",
-                "text": "5%"
-            }, {
-                "value": "8",
-                "text": "8%"
-            }, {
-                "value": "10",
-                "text": "10%"
-            }],
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "bangKeThietBi",
-            "label": "Bảng kê thiết bị: ",
-            "type": "table",
-            "placeholder": "",
-            "required": true,
-            "columns": [{
-                "header": "TT",
-                "field": "tt",
+    let ledhdForm = [
+        {
+            "id": "phan1",
+            "title": "I. Thông tin hợp đồng",
+            "child": [
+            {
+                "id": "soHopDong",
+                "label": "Số hợp đồng: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Hạng mục (Tên thiết bị)",
-                "field": "ten",
+                "placeholder": "Nhập số hợp đồng",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "ngayHopDong",
+                "label": "Ngày hợp đồng: ",
+                "type": "date",
+                "placeholder": "Chọn ngày hợp đồng",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "diaChiCongTy",
+                "label": "Địa chỉ công ty: ",
                 "type": "text",
-                "pattern": ""
-            }, {
-                "header": "Đơn vị tính",
-                "field": "dvt",
+                "placeholder": "Nhập địa chỉ công ty",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            }
+            ]
+        },
+        {
+            "id": "phan2",
+            "title": "II. Thông tin khách hàng",
+            "child": [
+            {
+                "id": "hoTenKhachHang",
+                "label": "Họ tên khách hàng: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Kích thước - Rộng",
-                "field": "rong",
+                "placeholder": "Nhập số hợp đồng",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "diaChiKhachHang",
+                "label": "Địa chỉ khách hàng: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Kích thước - Cao (sâu)",
-                "field": "cao",
+                "placeholder": "Nhập địa chỉ khách hàng",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "maSoThue",
+                "label": "Mã số thuế: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Tổng khối lượng",
-                "field": "tong",
+                "placeholder": "Nhập mã số thuế",
+                "required": true,
+                "pattern": "^[0-9]{10}$",
+                "readonly": false
+            },
+            {
+                "id": "daiDienKhachHang",
+                "label": "Đại diện khách hàng: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Thành tiền (VNĐ)",
-                "field": "tien",
+                "placeholder": "Nhập đại diện khách hàng",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "chucVuDaiDien",
+                "label": "Chức vụ: ",
                 "type": "text",
-                "pattern": ""
-            }],
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "tongDonGia",
-            "label": "Tổng: ",
-            "type": "text",
-            "placeholder": "",
-            "required": true,
-            "pattern": "",
-            "readonly": true
-        }, {
-            "id": "tongThue",
-            "label": "Thuế VAT: ",
-            "type": "text",
-            "placeholder": "",
-            "required": true,
-            "pattern": "",
-            "readonly": true
-        }, {
-            "id": "tongThanhToan",
-            "label": "Tổng thanh toán: ",
-            "type": "text",
-            "placeholder": "",
-            "required": true,
-            "pattern": "",
-            "readonly": true
-        }]
-    }, {
-        "id": "phan4",
-        "title": "IV. Thông tin thanh toán",
-        "child": [{
-            "id": "giaTriHopDong",
-            "label": "Giá trị hợp đồng: ",
-            "type": "text",
-            "placeholder": "",
-            "required": true,
-            "pattern": "",
-            "readonly": true
-        }, {
-            "id": "giaTriHopDongBangChu",
-            "label": "Giá trị hợp đồng bằng chữ: ",
-            "type": "text",
-            "placeholder": "",
-            "required": true,
-            "pattern": "",
-            "readonly": true
-        }, {
-            "id": "diaDiemLapDat",
-            "label": "Địa điểm lắp đặt: ",
-            "type": "text",
-            "placeholder": "Nhập địa điểm lắp đặt",
-            "required": true,
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "thoiGianThucHien",
-            "label": "Thời hạn thực hiện Hợp đồng: ",
-            "type": "text",
-            "placeholder": "Nhập thời hạn thực hiện (bằng ngày)",
-            "required": true,
-            "pattern": "^[0-9]{10}$",
-            "readonly": false
-        }, {
-            "id": "thoiGianNghiemThu",
-            "label": "Thời gian nghiệm thu: ",
-            "type": "text",
-            "placeholder": "Nhập thời gian nghiệm thu (bằng ngày)",
-            "required": true,
-            "pattern": "^[0-9]{10}$",
-            "readonly": false
-        }, {
-            "id": "soLanThanhToan",
-            "label": "Số lần thanh toán: ",
-            "type": "table",
-            "placeholder": "Nhập số lần thanh toán",
-            "required": true,
-            "columns": [{
-                "header": "Số tiền",
-                "field": "tien",
+                "placeholder": "Nhập chức vụ đại diện",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "soTaiKhoanKhachHang",
+                "label": "Số tài khoản: ",
                 "type": "text",
-                "pattern": "^[0-9]{10}$"
-            }, {
-                "header": "Bằng chữ",
-                "field": "chu",
-                "type": "text"
-            }],
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "thoiHanThanhToan",
-            "label": "Thời hạn thanh toán: ",
-            "type": "text",
-            "placeholder": "Nhập thời hạn thanh toán (bằng ngày)",
-            "required": true,
-            "pattern": "^[0-9]{10}$",
-            "readonly": false
-        }]
-    }, {
-        "id": "phan5",
-        "title": "V. Thông tin bảo hành",
-        "child": [{
-            "id": "baoHanh",
-            "label": "Thời gian bảo hành: ",
-            "type": "select",
-            "placeholder": "",
-            "required": true,
-            "options": [{
-                "value": "",
-                "text": "Chọn thời gian bảo hành"
-            }, {
-                "value": "12",
-                "text": "12 tháng"
-            }, {
-                "value": "24",
-                "text": "24 tháng"
-            }, {
-                "value": "36",
-                "text": "36 tháng"
-            }],
-            "pattern": "",
-            "readonly": false
-        }, {
-            "id": "thoiGianXulySuCo",
-            "label": "Thời gian xử lý sự cố: ",
-            "type": "text",
-            "placeholder": "Nhập thời gian xử lý sự cố (bằng giờ)",
-            "required": true,
-            "pattern": "^[0-9]{10}$",
-            "readonly": false
-        }]
-    }];
+                "placeholder": "Nhập số tài khoản",
+                "required": false,
+                "pattern": "",
+                "readonly": false
+            }
+            ]
+        },
+        {
+            "id": "phan3",
+            "title": "III. Thông tin thiết bị",
+            "child": [
+            {
+                "id": "vat",
+                "label": "VAT: ",
+                "type": "select",
+                "placeholder": "",
+                "required": true,
+                "options": [
+                {
+                    "value": "0",
+                    "text": "Chọn mức VAT"
+                },
+                {
+                    "value": "5",
+                    "text": "5%"
+                },
+                {
+                    "value": "8",
+                    "text": "8%"
+                },
+                {
+                    "value": "10",
+                    "text": "10%"
+                }
+                ],
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "bangKeThietBi",
+                "label": "Bảng kê thiết bị: ",
+                "type": "table",
+                "placeholder": "",
+                "required": true,
+                "columns": [
+                {
+                    "header": "TT",
+                    "field": "tt",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Hạng mục (Tên thiết bị)",
+                    "field": "ten",
+                    "type": "text",
+                    "pattern": ""
+                },
+                {
+                    "header": "Đơn vị tính",
+                    "field": "dvt",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Kích thước - Rộng",
+                    "field": "rong",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Kích thước - Cao (sâu)",
+                    "field": "cao",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Tổng khối lượng",
+                    "field": "tong",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Thành tiền (VNĐ)",
+                    "field": "tien",
+                    "type": "text",
+                    "pattern": ""
+                }
+                ],
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "tongDonGia",
+                "label": "Tổng: ",
+                "type": "text",
+                "placeholder": "",
+                "required": true,
+                "pattern": "",
+                "readonly": true
+            },
+            {
+                "id": "tongThue",
+                "label": "Thuế VAT: ",
+                "type": "text",
+                "placeholder": "",
+                "required": true,
+                "pattern": "",
+                "readonly": true
+            },
+            {
+                "id": "tongThanhToan",
+                "label": "Tổng thanh toán: ",
+                "type": "text",
+                "placeholder": "",
+                "required": true,
+                "pattern": "",
+                "readonly": true
+            }
+            ]
+        },
+        {
+            "id": "phan4",
+            "title": "IV. Thông tin thanh toán",
+            "child": [
+            {
+                "id": "giaTriHopDong",
+                "label": "Giá trị hợp đồng: ",
+                "type": "text",
+                "placeholder": "",
+                "required": true,
+                "pattern": "",
+                "readonly": true
+            },
+            {
+                "id": "giaTriHopDongBangChu",
+                "label": "Giá trị hợp đồng bằng chữ: ",
+                "type": "text",
+                "placeholder": "",
+                "required": true,
+                "pattern": "",
+                "readonly": true
+            },
+            {
+                "id": "diaDiemLapDat",
+                "label": "Địa điểm lắp đặt: ",
+                "type": "text",
+                "placeholder": "Nhập địa điểm lắp đặt",
+                "required": true,
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "thoiGianThucHien",
+                "label": "Thời hạn thực hiện Hợp đồng: ",
+                "type": "text",
+                "placeholder": "Nhập thời hạn thực hiện (bằng ngày)",
+                "required": true,
+                "pattern": "^[0-9]{10}$",
+                "readonly": false
+            },
+            {
+                "id": "thoiGianNghiemThu",
+                "label": "Thời gian nghiệm thu: ",
+                "type": "text",
+                "placeholder": "Nhập thời gian nghiệm thu (bằng ngày)",
+                "required": true,
+                "pattern": "^[0-9]{10}$",
+                "readonly": false
+            },
+            {
+                "id": "soLanThanhToan",
+                "label": "Số lần thanh toán: ",
+                "type": "specialTable",
+                "placeholder": "Nhập số lần thanh toán",
+                "required": true,
+                "columns": [
+                {
+                    "header": "Số tiền",
+                    "field": "tien",
+                    "type": "text",
+                    "pattern": "^[0-9]{10}$"
+                },
+                {
+                    "header": "Bằng chữ",
+                    "field": "chu",
+                    "type": "text"
+                },
+                {
+                    "header": "Điều kiện",
+                    "field": "dieukien",
+                    "type": "text"
+                }
+                ],
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "thoiHanThanhToan",
+                "label": "Thời hạn thanh toán: ",
+                "type": "text",
+                "placeholder": "Nhập thời hạn thanh toán (bằng ngày)",
+                "required": true,
+                "pattern": "^[0-9]{10}$",
+                "readonly": false
+            }
+            ]
+        },
+        {
+            "id": "phan5",
+            "title": "V. Thông tin bảo hành",
+            "child": [
+            {
+                "id": "baoHanh",
+                "label": "Thời gian bảo hành: ",
+                "type": "select",
+                "placeholder": "",
+                "required": true,
+                "options": [
+                {
+                    "value": "",
+                    "text": "Chọn thời gian bảo hành"
+                },
+                {
+                    "value": "12",
+                    "text": "12 tháng"
+                },
+                {
+                    "value": "24",
+                    "text": "24 tháng"
+                },
+                {
+                    "value": "36",
+                    "text": "36 tháng"
+                }
+                ],
+                "pattern": "",
+                "readonly": false
+            },
+            {
+                "id": "thoiGianXulySuCo",
+                "label": "Thời gian xử lý sự cố: ",
+                "type": "text",
+                "placeholder": "Nhập thời gian xử lý sự cố (bằng giờ)",
+                "required": true,
+                "pattern": "^[0-9]{10}$",
+                "readonly": false
+            }
+            ]
+        }
+        ];
 
-    form.forEach(section => {
+    ledhdForm.forEach(section => {
         section.child.forEach(field => {
             if (field.type === 'table') {
                 const tableId = `${field.id}`;
+                const length = (ledhdFormData[field.id] || []).length;                
                 const table = document.getElementById(tableId);
+
                 if (table) {
                     const tbody = table.querySelector('tbody');
                     if (tbody) {
                         tbody.innerHTML = '';
-                        (formData[field.id] || []).forEach(row => {
+                        (ledhdFormData[field.id] || []).forEach(row => {
                             const tr = document.createElement('tr');
                             field.columns.forEach(col => {
                                 const td = document.createElement('td');
@@ -602,20 +703,51 @@
                         });
                     }
                 }
+            } else if (field.type === 'specialTable') {
+                const tableId = `${field.id}`;
+                const length = (ledhdFormData[field.id] || []).length;
+                const input = document.getElementById(`${tableId}_text`);
+
+                if (input) {
+                    if (length < 10) {
+                        input.innerText = `0${length}` || '';
+                    } else {
+                        input.innerText = length || '';
+                    }
+                }
+                const container = document.createElement('div');
+                container.style.margin = '8px 0';
+                container.style.textAlign = 'justify';
+                (ledhdFormData[field.id] || []).forEach((row, index) => {
+                    const span = document.createElement('span');
+                    if (index == (length - 1)) {
+                        span.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền còn lại là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
+                    } else {
+                        span.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.<br>`;
+                    }
+                    container.appendChild(span);
+                });
+                const parent = document.getElementById(`${tableId}`).parentNode;
+                parent.replaceChild(container, document.getElementById(`${tableId}`));
             } else if (field.type === 'select') {
                 const select = document.getElementById(`${field.id}`);
                 if (select) {
-                    select.innerText = formData[field.id + '_text'] || '';
+                    select.innerText = ledhdFormData[field.id + '_text'] || '';
                 }
             } else if (field.type === 'date') {
                 const input = document.getElementById(`${field.id}`);
                 if (input) {
-                    let [day, month, year] = formData[field.id].split("/");
+                    let [day, month, year] = ledhdFormData[field.id].split("/");
                     input.innerText = `ngày ${day} tháng ${month} năm ${year}`;
                 }
             } else {
                 const input = document.getElementById(`${field.id}`);
-                if (input) input.innerText = formData[field.id] || '';
+                if (input) {
+                    if (field.pattern && ledhdFormData[field.id] < 10) {
+                        input.innerText = `0${ledhdFormData[field.id]}` || '';
+                    } else
+                        input.innerText = ledhdFormData[field.id] || '';
+                }
             }
         });
     });

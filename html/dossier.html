@@ -23,3 +23,14 @@
         </div>
     </div>
 </div>
+<!-- Modal xem thử -->
+<div id="modal-preview" style="display: none;">
+    <div style="background:#fff; border-radius:8px; padding:24px; max-width:900px; max-height:90vh; overflow:auto; box-shadow:0 4px 24px rgba(0,0,0,0.12);">
+        <div style="display: flex; justify-content: center;  align-items: center; gap: 12px; margin-bottom: 20px;">
+            <button class="action-btn" onclick="downloadPDF()">Tải PDF</button>
+            <button class="action-btn" onclick="downloadWord()">Tải Word</button>
+            <button class="action-btn" onclick="closePreview()">Đóng</button>
+        </div>
+        <div id="preview-html" class="ledhd-content"></div>
+    </div>
+</div>

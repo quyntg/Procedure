@@ -11,6 +11,15 @@ let isMobile = false;
 let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang ở procedure ko
 let recordFiles = []; // Mảng lưu trữ các file đã upload
 let hasFiles = false;
+let rules = []; // Mảng lưu trữ các rule hiện tại
+
+// Áp dụng rule
+const calculators = {
+    sum: vals => vals.reduce((a,b)=>a+b,0),
+    vat: ([base, vat]) => base * vat / 100,
+    convert: ([num]) => numberToVietnamese(num),
+    // thêm calc khác...
+};
 
 function loadPage(url, id) {
 	const app = document.getElementById(id);
@@ -569,11 +578,9 @@ async function getDossierDetail(id) {
             }
             return data;
         }
-        initDossierDetail({});
         return {};
     })
     .catch(() => {
-        initDossierDetail({});
     })
     .finally(data => {
         initDossierDetail(data);
@@ -672,11 +679,16 @@ function initDossierDetail(dossierDetail) {
         dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
     }
     
-    document.getElementById('record-id').textContent = dossierDetail.id || '';
-    document.getElementById('record-name').textContent = dossierDetail.name || '';
-    document.getElementById('record-customer').textContent = dossierDetail.customer || '';
-    document.getElementById('record-createDate').textContent = dossierDetail.createDate || '';
-    document.getElementById('record-modifiedDate').textContent = dossierDetail.modifiedDate || '';
+    let recordIdEl = document.getElementById('record-id');
+    if (recordIdEl) recordIdEl.textContent = dossierDetail.id || '';
+    let recordNameEl = document.getElementById('record-name');
+    if (recordNameEl) recordNameEl.textContent = dossierDetail.name || '';
+    let recordCustomerEl = document.getElementById('record-customer');
+    if (recordCustomerEl) recordCustomerEl.textContent = dossierDetail.customer || '';
+    let recordCreateDateEl = document.getElementById('record-createDate');
+    if (recordCreateDateEl) recordCreateDateEl.textContent = dossierDetail.createDate || '';
+    let recordModifiedDateEl = document.getElementById('record-modifiedDate');
+    if (recordModifiedDateEl) recordModifiedDateEl.textContent = dossierDetail.modifiedDate || '';
 
     renderRecordFiles(dossierDetail.files || []);
 }
@@ -721,9 +733,62 @@ function toggleFileForm(fileId) {
     }
 }
 
+function applyRules(rules, formId) {
+    let values = [];
+    rules.forEach(rule => {
+        if (rule.calc === 'sum') {
+            let sumValues = 0;
+            rule.relate.forEach(r => {
+                if (r.type === "table") {
+                    document.querySelectorAll(`#${formId}_${r.field} .${r.child}`).forEach(el=>{
+                        sumValues += Number(el.value) || 0;
+                    });
+                } else if (r.type === "number") {
+                    sumValues += Number(document.getElementById(`${formId}_${r.field}`).value) || 0;
+                }
+            });
+            document.getElementById(`${formId}_${rule.id}`).value = sumValues;
+        } else if (rule.calc === 'vat') {
+            let base = 0, vat = 0;
+            rule.relate.forEach(r => {
+                if (r.type === "number") {
+                    if (r.field === "tongDonGia") {
+                        base = Number(document.getElementById(`${formId}_${r.field}`).value) || 0;
+                    } else if (r.field === "vat") {
+                        vat = Number(document.getElementById(`${formId}_${r.field}`).value) || 0;
+                    }
+                }
+            });
+            const tax = Math.round(calculators.vat([base, vat]));
+            document.getElementById(`${formId}_${rule.id}`).value = tax;
+        } else if (rule.calc === 'convert') {
+            rule.relate.forEach(r => {
+                if (r.type === "number") {
+                    const num = Number(document.getElementById(`${formId}_${r.field}`).value) || 0;
+                    const text = calculators.convert([num]);
+                    document.getElementById(`${formId}_${rule.id}`).value = text;
+                }
+            });
+        } else if (rule.calc === 'convertInTable') {
+            let textField = rule.relate.find(r => r.type === 'text');
+            let numField = rule.relate.find(r => r.type === 'number');
+            document.querySelectorAll(`${formId}_#${rule.id} .${numField.field}`).forEach(el=>{
+                let textConverted = calculators.convert([Number(el.value) || 0]);
+                let row = el.closest('tr');
+                if (row) {
+                    let textInput = row.querySelector(`input.${textField.field}`);
+                    if (textInput) {
+                        textInput.value = textConverted;
+                    }
+                }
+            });
+        }
+    });
+}
+
 function renderRecordFiles(files) {
     const container = document.getElementById('record-files');
-    container.innerHTML = '';
+    if (container) container.innerHTML = '';
     files.forEach((file, index) => {
         const fileDiv = document.createElement('div');
         let html = '';
@@ -756,13 +821,23 @@ function renderRecordFiles(files) {
             html += `
                 <div class="record-actions">
                     <button class="action-btn" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
-                    <button class="action-btn" onclick="showModal('preview', { formId: '${file.id}' })">Xem thử</button>
+                    <button class="action-btn" onclick="showPreviewModal('/html/LEDHD.html')">Xem thử</button>
                 </div>
             `;
         }
         html += `</div>`;
         fileDiv.innerHTML = html;
-        container.appendChild(fileDiv);
+        if (fileDiv && container) container.appendChild(fileDiv);
+
+        if ((!file.form || file.form === '' || file.form === '{}' || file.form === '[]') && (!file.rule || file.rule === '' || file.rule === '{}' || file.rule === '[]')) return;
+        rules = JSON.parse(file.rule);
+
+        // Bind sự kiện
+        document.querySelectorAll("input").forEach(el => {
+            el.addEventListener("input", function() {
+                applyRules(rules, file.id);
+            });
+        });
     });
 }
 
@@ -904,7 +979,7 @@ function generateForm(jsonData, formId) {
     jsonData.forEach(section => {
         html += `<fieldset class="form-section"><legend class="legend-label">${section.title || ''}</legend>`;
         section.child.forEach(field => {
-            if (field.type === 'table' && Array.isArray(field.columns)) {
+            if ((field.type === 'table' && Array.isArray(field.columns)) || (field.type === 'specialTable' && Array.isArray(field.columns))) {
                 // Table with add/remove row buttons
                 const tableId = `${formId}_${field.id}`;
                 html += `<div class="form-row"><label>${field.label || ''}</label><table class="dynamic-table" id="${tableId}"><thead><tr>`;
@@ -915,8 +990,8 @@ function generateForm(jsonData, formId) {
                 html += `</tr></thead><tbody>`;
                 // Initial row
                 html += `<tr>`;
-                field.columns.forEach(col => {
-                    html += `<td><input type="${col.type || 'text'}" name="${tableId}_${col.field}" ${field.pattern ? ` pattern='${field.pattern}'` : ''}/></td>`;
+                field.columns.forEach((col, idx) => {
+                    html += `<td><input type="${col.type || 'text'}" class="${col.field}" name="${tableId}_${col.field}" ${field.pattern ? ` pattern='${field.pattern}'` : ''}/></td>`;
                 });
                 html += `<td style='text-align:center'>`;
                 html += `<button type='button' class='table-btn' onclick='addTableRow("${tableId}", ${JSON.stringify(field.columns).replace(/'/g,"&#39;")})'>+</button>`;
@@ -999,7 +1074,12 @@ function addTableRow(tableId, columns) {
         const td = document.createElement('td');
         const input = document.createElement('input');
         input.type = col.type || 'text';
+        input.className = col.field;
         input.name = `${tableId}_${col.field}`;
+        // Bind sự kiện đúng cách
+        input.addEventListener("input", function() {
+            applyRules(rules, tableId.split('_')[0]);
+        });
         td.appendChild(input);
         tr.appendChild(td);
     });
@@ -1019,9 +1099,9 @@ function removeTableRow(btn) {
 
 function numberToVietnamese(amount) {
     if (typeof amount !== "number") amount = parseInt(amount, 10);
-    if (isNaN(amount)) return "";
+    if (isNaN(amount) || amount === 0) return "không đồng";
 
-    const digits = ["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"];
+    const digits = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
     const units = ["", "nghìn", "triệu", "tỷ", "nghìn tỷ", "triệu tỷ"];
 
     function readThreeDigits(num) {
@@ -1032,39 +1112,135 @@ function numberToVietnamese(amount) {
 
         if (hundred > 0) {
             result += digits[hundred] + " trăm";
-            if (ten == 0 && unit > 0) result += " linh";
+            if (ten === 0 && unit > 0) result += " linh";
         }
-        if (ten > 0 && ten != 1) {
+
+        if (ten > 1) {
             result += " " + digits[ten] + " mươi";
-            if (ten > 1 && unit == 1) result += " mốt";
-        } else if (ten == 1) {
+            if (unit === 1) result += " mốt";
+            else if (unit === 5) result += " lăm";
+            else if (unit > 1 && unit !== 5) result += " " + digits[unit];
+        } else if (ten === 1) {
             result += " mười";
-            if (unit == 1) result += " một";
+            if (unit === 1) result += " một";
+            else if (unit === 5) result += " lăm";
+            else if (unit > 1 && unit !== 5) result += " " + digits[unit];
+        } else if (ten === 0 && hundred === 0 && unit > 0) {
+            result += digits[unit];
+        } else if (ten === 0 && hundred > 0 && unit > 0) {
+            result += " " + digits[unit];
         }
-        if (unit > 0 && ten != 1 && unit != 1) {
-            if (unit == 5 && ten > 0) result += " lăm";
-            else result += " " + digits[unit];
-        }
+
         return result.trim();
     }
 
-    let index = 0;
-    let result = "";
+    // Tách nhóm 3 chữ số từ phải sang trái
+    let parts = [];
     while (amount > 0) {
-        let part = amount % 1000;
-        if (part > 0) {
-            let unitName = units[index];
-            result = readThreeDigits(part) + (unitName ? " " + unitName : "") + " " + result;
-        }
+        parts.push(amount % 1000);
         amount = Math.floor(amount / 1000);
-        index++;
     }
 
-    result = result.trim();
-    if (result.length > 0) {
-        result = result.charAt(0).toUpperCase() + result.slice(1);
+    // Đọc từ nhóm cao nhất xuống
+    let result = "";
+    for (let i = parts.length - 1; i >= 0; i--) {
+        let group = parts[i];
+        if (group > 0) {
+            result += readThreeDigits(group) + " " + units[i] + " ";
+        }
     }
-    return result + " đồng";
+
+    // Chuẩn hóa
+    result = result.trim();
+    result = result.charAt(0).toUpperCase() + result.slice(1) + " đồng";
+
+    return result;
 }
 
+
 //end dossier js
+
+
+// Hàm mở modal và import file HTML (ví dụ LEDHD.html)
+async function showPreviewModal(htmlFilePath) {
+    const modal = document.getElementById('modal-preview');
+    const previewHtml = document.getElementById('preview-html');
+    previewHtml.innerHTML = 'Đang tải...';
+    modal.style.display = 'flex';
+    try {
+        const res = await fetch(htmlFilePath);
+        const html = await res.text();
+        previewHtml.innerHTML = html;
+
+        // Thực thi các script trong nội dung vừa chèn
+        const scripts = previewHtml.querySelectorAll('script');
+        scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            if (oldScript.src) {
+                newScript.src = oldScript.src;
+            } else {
+                newScript.textContent = oldScript.textContent;
+            }
+            document.body.appendChild(newScript);
+            // Nếu không muốn giữ lại, có thể remove sau khi chạy
+            // setTimeout(() => newScript.remove(), 1000);
+        });
+    } catch (err) {
+        previewHtml.innerHTML = '<p style="color:red">Không thể tải file!</p>';
+    }
+}
+
+function closePreview() {
+    document.getElementById('modal-preview').style.display = 'none';
+    document.getElementById('preview-html').innerHTML = '';
+}
+
+function downloadPDF() {
+    const element = document.getElementById('preview-html');
+    const opt = {
+        margin: [10, 10, 10, 10], // mm
+        filename: 'file-xem-thu.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: {
+            scale: 1.5,
+            scrollY: 0,
+            useCORS: true
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        },
+        pagebreak: { 
+            mode: ['css'], 
+            avoid: 'tr' 
+        }
+    };
+
+    // Giảm lỗi cắt border + trang trắng
+    element.style.background = '#fff'; 
+    element.style.paddingBottom = '1px'; // giúp html2pdf tính chiều cao đúng
+
+    html2pdf()
+        .set(opt)
+        .from(element)
+        .toPdf()
+        .get('pdf')
+        .then(function (pdf) {
+        // Xóa trang trắng cuối nếu có (page rỗng hoặc rất nhỏ)
+        const totalPages = pdf.internal.getNumberOfPages();
+        const lastPage = pdf.internal.pages[totalPages];
+        if (lastPage && lastPage.length <= 2) {
+            pdf.deletePage(totalPages);
+        }
+        })
+        .save();
+}
+
+
+function downloadWord() {
+    const element = document.getElementById('preview-html');
+    const html = element.innerHTML;
+    const converted = window.htmlDocx.asBlob(html, {orientation: 'portrait', margins: {top:720, right:720, bottom:720, left:720}});
+    saveAs(converted, 'file-xem-thu.docx');
+}
