@@ -493,6 +493,13 @@ h2 {
     box-shadow: 0 4px 16px rgba(80, 112, 255, 0.15);
 }
 
+.action-btn-disabled {
+    background: #e0f2fe;
+    color: #7dd3fc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 /* Spinner styles */
 .spinner-svg {
     vertical-align: middle;

@@ -12,6 +12,7 @@ let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang
 let recordFiles = []; // Mảng lưu trữ các file đã upload
 let hasFiles = false;
 let rules = []; // Mảng lưu trữ các rule hiện tại
+let downloadFileName = ""; // Tên file khi download
 
 // Áp dụng rule
 const calculators = {
@@ -772,7 +773,7 @@ function applyRules(rules, formId) {
         } else if (rule.calc === 'convertInTable') {
             let textField = rule.relate.find(r => r.type === 'text');
             let numField = rule.relate.find(r => r.type === 'number');
-            document.querySelectorAll(`${formId}_#${rule.id} .${numField.field}`).forEach(el=>{
+            document.querySelectorAll(`#${formId}_${rule.id} .${numField.field}`).forEach(el=>{
                 let textConverted = calculators.convert([Number(el.value) || 0]);
                 let row = el.closest('tr');
                 if (row) {
@@ -787,6 +788,7 @@ function applyRules(rules, formId) {
 }
 
 function renderRecordFiles(files) {
+    previewSettings = [];
     const container = document.getElementById('record-files');
     if (container) container.innerHTML = '';
     files.forEach((file, index) => {
@@ -817,13 +819,42 @@ function renderRecordFiles(files) {
             }
             html += `</div></div>`;
         } else {
+            previewSettings.push({
+                id: file.id,
+                form: JSON.parse(file.form),
+                formdata: {}
+            });
+            downloadFileName = (sessionStorage.getItem('dossierId') + '_' + file.shorten) || 'file-xem-thu';
             html += generateForm(JSON.parse(file.form), file.id);
-            html += `
-                <div class="record-actions">
-                    <button class="action-btn" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
-                    <button class="action-btn" onclick="showPreviewModal('/html/LEDHD.html')">Xem thử</button>
-                </div>
-            `;
+
+            if (Array.isArray(file.dossierFiles) && file.dossierFiles.length) {
+                file.dossierFiles.forEach(f => {
+                    if (f.templateShorten == file.shorten) {
+                        if (!f.data) {
+                            html += `
+                                <div class="record-actions">
+                                    <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
+                                    <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                                </div>
+                            `;
+                        } else {         
+                            html += `
+                                <div class="record-actions">
+                                    <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
+                                    <button class="action-btn" id="preview-btn-${file.id}" onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+            } else {
+                html += `
+                    <div class="record-actions">
+                        <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
+                        <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                    </div>
+                `;
+            }
         }
         html += `</div>`;
         fileDiv.innerHTML = html;
@@ -941,6 +972,45 @@ async function uploadFileHandler(id, shorten) {
     reader.readAsDataURL(file);
 }
 
+
+// Hàm gọi API lưu dossier file
+async function saveDossierFile ({ dossierId, templateFileId, templateShorten, fileName, url, formdata }) {
+    try {
+        const body = new URLSearchParams();
+        body.append('action', 'saveDossierFile');
+        body.append('dossierId', dossierId);
+        body.append('templateFileId', templateFileId);
+        body.append('templateShorten', templateShorten);
+        body.append('fileName', fileName);
+        body.append('url', url);
+        body.append('formdata', formdata);
+        const res = await fetch(ggApiUrl, {
+            method: 'POST',
+            body: body
+        });
+        const data = await res.json();
+        const modal = document.getElementById('modal-confirm');
+        let spin = document.getElementById('spin-confirm');
+        spin.classList.remove('spinning');
+        spin.style.display = 'none';
+        modal.style.display = 'none';
+
+        if (data && data.success) {
+            let previewBtn = document.getElementById(`preview-btn-${templateFileId}`);
+            if (previewBtn) {
+                previewBtn.classList.remove('action-btn-disabled');
+                previewBtn.removeAttribute('disabled');
+            }
+            showModal('notification', { message: "Ghi lại thành công." });
+        } else {
+            showModal('notification', { message: "Lỗi ghi lại: " + (data && data.error ? data.error : "") });
+        }
+        console.log('Save dossier file result:', data);
+    } catch (err) {
+        console.error('Save dossier file error:', err);
+    }
+}
+
 function removeFile(fileId, templateFileId) {
     showModal('delete', {message: 'Bạn có chắc chắn muốn xoá file này?', templateFileId: templateFileId, fileId: fileId});
 }
@@ -1016,10 +1086,13 @@ function generateForm(jsonData, formId) {
 function saveFormData(formId) {
     let dossierDetail = JSON.parse(sessionStorage.getItem('dossierDetail') || '{}');
     let form = JSON.parse(dossierDetail.files.find(f => f.id === formId).form || '[]');
-    let formData = {}
+    let formData = {};
+    let firstInvalid = null;
+    let errorMessage = '';
+
     form.forEach(section => {
         section.child.forEach(field => {
-            if (field.type === 'table') {
+            if (field.type === 'table' || field.type === 'specialTable') {
                 const tableId = `${formId}_${field.id}`;
                 const table = document.getElementById(tableId);
                 if (table) {
@@ -1027,9 +1100,17 @@ function saveFormData(formId) {
                     formData[field.id] = [];
                     rows.forEach(row => {
                         const rowData = {};
+                        let rowValid = true;
                         field.columns.forEach((col, idx) => {
                             const input = row.querySelectorAll('td input')[idx];
-                            if (input) rowData[col.field] = input.value;
+                            if (input) {
+                                rowData[col.field] = input.value;
+                                if (col.required && !input.value && rowValid) {
+                                    rowValid = false;
+                                    if (!firstInvalid) firstInvalid = input;
+                                    errorMessage = `Vui lòng nhập đầy đủ trường "${col.header}" trong bảng "${field.label}"`;
+                                }
+                            }
                         });
                         formData[field.id].push(rowData);
                     });
@@ -1039,29 +1120,65 @@ function saveFormData(formId) {
                 if (select) {
                     formData[field.id] = select.value;
                     formData[`${field.id}_text`] = select.options[select.selectedIndex].text;
+                    if (field.required && !select.value && !firstInvalid) {
+                        firstInvalid = select;
+                        errorMessage = `Vui lòng chọn trường "${field.label}"`;
+                    }
                 }
             } else if (field.type === 'date') {
                 const input = document.getElementById(`${formId}_${field.id}`);
                 if (input) {
-                    const [year, month, day] = input.split("-");
+                    const [year, month, day] = input.value.split("-");
                     const formatted = `${day}/${month}/${year}`;
                     formData[field.id] = formatted;
+                    if (field.required && !input.value && !firstInvalid) {
+                        firstInvalid = input;
+                        errorMessage = `Vui lòng nhập trường "${field.label}"`;
+                    }
                 }
             } else {
                 const input = document.getElementById(`${formId}_${field.id}`);
-                if (input) formData[field.id] = input.value;
+                if (input) {
+                    formData[field.id] = input.value;
+                    if (field.required && !input.value && !firstInvalid) {
+                        firstInvalid = input;
+                        errorMessage = `Vui lòng nhập trường "${field.label}"`;
+                    }
+                }
             }
         });
     });
 
-    console.log('Form Data to save:', formData);
-    
-    const modal = document.getElementById('modal-confirm');
-    let spin = document.getElementById('spin-confirm');
+    if (firstInvalid) {
+        if (typeof firstInvalid.focus === 'function') firstInvalid.focus();
+        showModal('notification', { message: errorMessage });
+        return;
+    }
 
-    spin.classList.remove('spinning');
-    spin.style.display = 'none';
-    modal.style.display = 'none';
+    // Hiển thị spinner ở nút ghi lại
+    let spin = document.getElementById('spin-confirm');
+    spin.classList.add('spinning');
+    spin.style.display = 'inline-block';
+
+    // Gọi API lưu dossier file
+    const dossierId = dossierDetail.id || '';
+    const fileObj = dossierDetail.files.find(f => f.id === formId) || {};
+    const templateFileId = fileObj.id || '';
+    const templateShorten = fileObj.shorten || '';
+    const fileName = (dossierId + '_' + templateShorten) || '';
+    const url = fileObj.url || '';
+
+    saveDossierFile ({
+        dossierId,
+        templateFileId,
+        templateShorten,
+        fileName,
+        url,
+        formdata: JSON.stringify(formData)
+    });
+
+    console.log('Form Data to save:', formData);
+    previewSettings.find(f => f.id === formId).formdata = formData;
 }
 
 // Add/remove row functions for dynamic tables
@@ -1161,30 +1278,104 @@ function numberToVietnamese(amount) {
 //end dossier js
 
 
+// Hàm điền dữ liệu vào template
+function populateLEDHDTemplate(formdata, form, container) {
+    form.forEach(section => {
+        section.child.forEach(field => {
+            if (field.type === 'table') {
+                const tableId = `${field.id}`;
+                const table = container.querySelector(`#${tableId}`);
+                if (table) {
+                    const tbody = table.querySelector('tbody');
+                    if (tbody) {
+                        tbody.innerHTML = '';
+                        (formdata[field.id] || []).forEach(row => {
+                            const tr = document.createElement('tr');
+                            field.columns.forEach(col => {
+                                const td = document.createElement('td');
+                                td.innerText = row[col.field] || '';
+                                if (col.field !== 'ten') {
+                                    td.style.textAlign = 'center';
+                                }
+                                tr.appendChild(td);
+                            });
+                            tbody.appendChild(tr);
+                        });
+                    }
+                }
+            } else if (field.type === 'specialTable') {
+                const tableId = `${field.id}`;
+                const length = (formdata[field.id] || []).length;
+                const input = container.querySelector(`#${tableId}_text`);
+                if (input) {
+                    if (length < 10) {
+                        input.innerText = `0${length}` || '';
+                    } else {
+                        input.innerText = length || '';
+                    }
+                }
+                const specialContainer = document.createElement('div');
+                specialContainer.style.margin = '8px 0';
+                specialContainer.style.textAlign = 'justify';
+                (formdata[field.id] || []).forEach((row, index) => {
+                    const p = document.createElement('p');
+                    if (index == (length - 1)) {
+                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền còn lại là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
+                    } else {
+                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
+                    }
+                    specialContainer.appendChild(p);
+                });
+                const tableEl = container.querySelector(`#${tableId}`);
+                if (tableEl && tableEl.parentNode) {
+                    tableEl.parentNode.replaceChild(specialContainer, tableEl);
+                }
+            } else if (field.type === 'select') {
+                const select = container.querySelector(`#${field.id}`);
+                if (select) {
+                    select.innerText = formdata[field.id + '_text'] || '';
+                }
+            } else if (field.type === 'date') {
+                const input = container.querySelector(`#${field.id}`);
+                if (input) {
+                    let [day, month, year] = (formdata[field.id] || '').split("/");
+                    input.innerText = `ngày ${day} tháng ${month} năm ${year}`;
+                }
+            } else {
+                const input = container.querySelector(`#${field.id}`);
+                if (input) {
+                    if (field.pattern && formdata[field.id] < 10) {
+                        input.textContent = `0${formdata[field.id]}` || '';
+                    } else {
+                        input.textContent = formdata[field.id] || '';
+                    }
+                }
+            }
+        });
+    });
+}
+
 // Hàm mở modal và import file HTML (ví dụ LEDHD.html)
-async function showPreviewModal(htmlFilePath) {
+async function showPreviewModal(htmlFilePath, formId) {
     const modal = document.getElementById('modal-preview');
     const previewHtml = document.getElementById('preview-html');
     previewHtml.innerHTML = 'Đang tải...';
     modal.style.display = 'flex';
+    previewSettings.find(f => {
+        if (f.id === formId) {
+            ledhdFormData = f.formdata;
+            ledhdForm = f.form;
+        }
+    });
     try {
         const res = await fetch(htmlFilePath);
         const html = await res.text();
-        previewHtml.innerHTML = html;
+        previewHtml.innerHTML = html;        
 
-        // Thực thi các script trong nội dung vừa chèn
-        const scripts = previewHtml.querySelectorAll('script');
-        scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            if (oldScript.src) {
-                newScript.src = oldScript.src;
-            } else {
-                newScript.textContent = oldScript.textContent;
-            }
-            document.body.appendChild(newScript);
-            // Nếu không muốn giữ lại, có thể remove sau khi chạy
-            // setTimeout(() => newScript.remove(), 1000);
-        });
+        // Inject dữ liệu vào template
+        if (ledhdFormData && ledhdForm) {
+            populateLEDHDTemplate(ledhdFormData, ledhdForm, previewHtml);
+        }
     } catch (err) {
         previewHtml.innerHTML = '<p style="color:red">Không thể tải file!</p>';
     }
@@ -1195,11 +1386,69 @@ function closePreview() {
     document.getElementById('preview-html').innerHTML = '';
 }
 
+// Hàm có cắt file thành nhiều trang, nhưng đôi khi bị lỗi cắt trang không đúng chỗ
+// function downloadPDF() {
+//     const element = document.getElementById('preview-html');
+//     const opt = {
+//         margin: [10, 10, 10, 10], // mm
+//         filename: 'file-xem-thu.pdf',
+//         image: { type: 'jpeg', quality: 0.98 },
+//         html2canvas: {
+//             scale: 1.5,
+//             scrollY: 0,
+//             useCORS: true
+//         },
+//         jsPDF: {
+//             unit: 'mm',
+//             format: 'a4',
+//             orientation: 'portrait'
+//         },
+//         pagebreak: { 
+//             mode: ['css'], 
+//             avoid: 'tr' 
+//         }
+//     };
+
+//     // Giảm lỗi cắt border + trang trắng
+//     element.style.background = '#fff'; 
+//     element.style.paddingBottom = '1px'; // giúp html2pdf tính chiều cao đúng
+
+//     html2pdf()
+//         .set(opt)
+//         .from(element)
+//         .toPdf()
+//         .get('pdf')
+//         .then(function (pdf) {
+//         // Xóa trang trắng cuối nếu có (page rỗng hoặc rất nhỏ)
+//         const totalPages = pdf.internal.getNumberOfPages();
+//         const lastPage = pdf.internal.pages[totalPages];
+//         if (lastPage && lastPage.length <= 2) {
+//             pdf.deletePage(totalPages);
+//         }
+//         })
+//         .save();
+// }
+
+function collectCSS() {
+    let cssText = '';
+    for (const sheet of document.styleSheets) {
+        try {
+        for (const rule of sheet.cssRules) {
+            cssText += rule.cssText + '\n';
+        }
+        } catch (e) {
+        
+        }
+    }
+    return cssText;
+}
+
 function downloadPDF() {
     const element = document.getElementById('preview-html');
+
     const opt = {
         margin: [10, 10, 10, 10], // mm
-        filename: 'file-xem-thu.pdf',
+        filename: fileName + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
             scale: 1.5,
@@ -1211,36 +1460,36 @@ function downloadPDF() {
             format: 'a4',
             orientation: 'portrait'
         },
-        pagebreak: { 
-            mode: ['css'], 
-            avoid: 'tr' 
-        }
+        // Loại bỏ cấu hình pagebreak để không tự cắt trang
+        // pagebreak: false
     };
 
-    // Giảm lỗi cắt border + trang trắng
-    element.style.background = '#fff'; 
-    element.style.paddingBottom = '1px'; // giúp html2pdf tính chiều cao đúng
+    element.style.background = '#fff';
+    element.style.paddingBottom = '1px';
 
     html2pdf()
         .set(opt)
         .from(element)
-        .toPdf()
-        .get('pdf')
-        .then(function (pdf) {
-        // Xóa trang trắng cuối nếu có (page rỗng hoặc rất nhỏ)
-        const totalPages = pdf.internal.getNumberOfPages();
-        const lastPage = pdf.internal.pages[totalPages];
-        if (lastPage && lastPage.length <= 2) {
-            pdf.deletePage(totalPages);
-        }
-        })
         .save();
 }
 
 
 function downloadWord() {
     const element = document.getElementById('preview-html');
-    const html = element.innerHTML;
-    const converted = window.htmlDocx.asBlob(html, {orientation: 'portrait', margins: {top:720, right:720, bottom:720, left:720}});
-    saveAs(converted, 'file-xem-thu.docx');
+    const css = collectCSS();
+    const html = `
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <style>${css}</style>
+            </head>
+            <body>${element.innerHTML}</body>
+        </html>
+    `;
+    const options = {
+        orientation: 'portrait',
+        margins: { top: 720, right: 720, bottom: 720, left: 720 }
+    };
+    const converted = window.htmlDocx.asBlob(html, options);
+    saveAs(converted, fileName + '.docx');
 }

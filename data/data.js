@@ -1,6 +1,7 @@
 const ggApiUrl = 'https://script.google.com/macros/s/AKfycbyUWAmBNwl3QUua9JCBk9nsIVi_LuKlW1_llsNSqHgTtbPjlkx9AC0gPP5G4z_9dQ0z/exec';
 // Dữ liệu mẫu cho thủ tục (có phân cấp)
 
+let previewSettings = []; // Cấu trúc form mẫu cho preview
 let procedures = [
     { id: 1, name: 'Thủ tục A', counter: 10, children: [
         { id: 11, name: 'Thủ tục A1', counter: 5 },

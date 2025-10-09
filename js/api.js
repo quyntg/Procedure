@@ -43,7 +43,8 @@ function doPost(e) {
   const actions = {
     login: handleLogin,
     upload: handleUploadRequest,
-    listFolders: handleListFolders
+    listFolders: handleListFolders,
+    saveDossierFile: handleSaveDossierFile
     // thêm các action khác ở đây
   };
 
@@ -528,5 +529,100 @@ function nextStepDossier(dossierId) {
   sheet.getRange(rowIdx, statusIdx + 1).setValue(nextStep);
 
   return { success: true, nextStatus: nextStep };
+}
+
+// Lưu formdata vào dòng mới của dossierFiles
+function handleSaveDossierFile(e) {
+  try {
+    const dossierId = e.parameter.dossierId || '';
+    const templateFileId = e.parameter.templateFileId || '';
+    const templateShorten = e.parameter.templateShorten || '';
+    const formdata = e.parameter.formdata || '';
+    const fileName = e.parameter.fileName || '';
+    const url = e.parameter.url || '';
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
+    if (!sheet) throw new Error('Sheet dossierFiles không tồn tại.');
+    const data = sheet.getDataRange().getValues();
+    const headers = data[0];
+    // Tìm id lớn nhất hiện tại
+    let maxId = 0;
+    for (let i = 1; i < data.length; i++) {
+      const idStr = String(data[i][0] || '');
+      if (/^DF\d{8}$/.test(idStr)) {
+        const num = parseInt(idStr.slice(2), 10);
+        if (num > maxId) maxId = num;
+      }
+    }
+    const newId = 'DF' + String(maxId + 1).padStart(8, '0');
+    let now = new Date();
+    let dd = String(now.getDate()).padStart(2, '0');
+    let mm = String(now.getMonth() + 1).padStart(2, '0');
+    let yyyy = now.getFullYear();
+    let todayStr = dd + '/' + mm + '/' + yyyy;
+
+    // Kiểm tra đã tồn tại (ghi đè): tìm theo dossierId + templateFileId + templateShorten
+    let foundRow = -1;
+    let dossierIdIdx = headers.indexOf('dossierId');
+    let templateFileIdIdx = headers.indexOf('templateFileId');
+    let templateShortenIdx = headers.indexOf('templateShorten');
+    for (let i = 1; i < data.length; i++) {
+      let row = data[i];
+      if (
+        row[dossierIdIdx] == dossierId &&
+        row[templateFileIdIdx] == templateFileId &&
+        row[templateShortenIdx] == templateShorten
+      ) {
+        foundRow = i + 1; // sheet row index (1-based)
+        break;
+      }
+    }
+    if (foundRow > 0) {
+      // Ghi đè: cập nhật data, fileName, url, modifiedDate
+      let nameIdx = headers.indexOf('name');
+      let urlIdx = headers.indexOf('url');
+      let dataIdx = headers.indexOf('data');
+      let modifiedIdx = headers.indexOf('modifiedDate');
+      sheet.getRange(foundRow, nameIdx + 1).setValue(fileName);
+      sheet.getRange(foundRow, urlIdx + 1).setValue(url);
+      sheet.getRange(foundRow, dataIdx + 1).setValue(formdata);
+      sheet.getRange(foundRow, modifiedIdx + 1).setValue(todayStr);
+      return {
+        success: true,
+        id: data[foundRow - 1][0],
+        templateFileId: templateFileId,
+        name: fileName,
+        url: url,
+        data: formdata,
+        updated: true
+      };
+    } else {
+      // Thêm mới
+      let row = [];
+      headers.forEach(h => {
+        if (h === 'id') row.push(newId);
+        else if (h === 'name') row.push(fileName);
+        else if (h === 'url') row.push(url);
+        else if (h === 'templateFileId') row.push(templateFileId);
+        else if (h === 'templateShorten') row.push(templateShorten);
+        else if (h === 'dossierId') row.push(dossierId);
+        else if (h === 'data') row.push(formdata);
+        else if (h === 'createDate') row.push(todayStr);
+        else row.push('');
+      });
+      sheet.appendRow(row);
+      return {
+        success: true,
+        id: newId,
+        templateFileId: templateFileId,
+        name: fileName,
+        url: url,
+        data: formdata,
+        created: true
+      };
+    }
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
 }
 
