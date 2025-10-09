@@ -819,42 +819,46 @@ function renderRecordFiles(files) {
             }
             html += `</div></div>`;
         } else {
-            previewSettings.push({
-                id: file.id,
-                form: JSON.parse(file.form),
-                formdata: {}
-            });
             downloadFileName = (sessionStorage.getItem('dossierId') + '_' + file.shorten) || 'file-xem-thu';
-            html += generateForm(JSON.parse(file.form), file.id);
-
+            let formData = {};
+            let btnHTML = '';
             if (Array.isArray(file.dossierFiles) && file.dossierFiles.length) {
                 file.dossierFiles.forEach(f => {
                     if (f.templateShorten == file.shorten) {
                         if (!f.data) {
-                            html += `
+                            btnHTML += `
                                 <div class="record-actions">
                                     <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
-                                    <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                                    <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('${file.path}', '${file.id}')">Xem thử</button>
                                 </div>
                             `;
-                        } else {         
-                            html += `
+                        } else {      
+                            formData = JSON.parse(f.data);   
+                            btnHTML += `
                                 <div class="record-actions">
                                     <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
-                                    <button class="action-btn" id="preview-btn-${file.id}" onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                                    <button class="action-btn" id="preview-btn-${file.id}" onclick="showPreviewModal('${file.path}', '${file.id}')">Xem thử</button>
                                 </div>
                             `;
                         }
                     }
                 });
             } else {
-                html += `
+                btnHTML += `
                     <div class="record-actions">
                         <button class="action-btn" id="save-btn-${file.id}" onclick="showModal('save', { formId: '${file.id}' })">Ghi lại</button>
-                        <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('/html/LEDHD.html', '${file.id}')">Xem thử</button>
+                        <button class="action-btn action-btn-disabled" id="preview-btn-${file.id}" disabled onclick="showPreviewModal('${file.path}', '${file.id}')">Xem thử</button>
                     </div>
                 `;
             }
+            let formHTML = generateForm(JSON.parse(file.form), file.id, formData);
+            html += formHTML;
+            html += btnHTML;
+            previewSettings.push({
+                id: file.id,
+                form: JSON.parse(file.form),
+                formdata: formData || {}
+            });
         }
         html += `</div>`;
         fileDiv.innerHTML = html;
@@ -864,11 +868,33 @@ function renderRecordFiles(files) {
         rules = JSON.parse(file.rule);
 
         // Bind sự kiện
-        document.querySelectorAll("input").forEach(el => {
-            el.addEventListener("input", function() {
-                applyRules(rules, file.id);
+        if (rules && Array.isArray(rules)) {
+            rules.forEach(rule => {
+                rule.relate.forEach(r => {
+                    if (r.type === "table") {
+                        document.querySelectorAll(`#${file.id}_${r.field} .${r.child}`).forEach(el => {
+                            el.addEventListener("input", function() {
+                                applyRules(rules, file.id);
+                            });
+                        });
+                    } else if (rule.calc === "convertInTable") {
+                        let table = document.getElementById(`${file.id}_${rule.id}`);
+                        table.querySelectorAll(`.${r.field}`).forEach(el => {
+                            el.addEventListener("input", function() {
+                                applyRules(rules, file.id);
+                            });
+                        });
+                    } else {
+                        const input = document.getElementById(`${file.id}_${r.field}`);
+                        if (input) {
+                            input.addEventListener("input", function() {
+                                applyRules(rules, file.id);
+                            });
+                        }
+                    }
+                });
             });
-        });
+        }
     });
 }
 
@@ -1043,7 +1069,14 @@ async function removeUploadedFileHandler(fileId, templateFileId) {
     }
 }
 
-function generateForm(jsonData, formId) {
+function convertDateFormat(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return dateStr;
+    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+}
+
+function generateForm(jsonData, formId, formData) {
     let html = '';
     if (!Array.isArray(jsonData)) return html;
     jsonData.forEach(section => {
@@ -1059,23 +1092,30 @@ function generateForm(jsonData, formId) {
                 html += `<th style='width:40px;text-align:center'>#</th>`;
                 html += `</tr></thead><tbody>`;
                 // Initial row
-                html += `<tr>`;
-                field.columns.forEach((col, idx) => {
-                    html += `<td><input type="${col.type || 'text'}" class="${col.field}" name="${tableId}_${col.field}" ${field.pattern ? ` pattern='${field.pattern}'` : ''}/></td>`;
-                });
-                html += `<td style='text-align:center'>`;
-                html += `<button type='button' class='table-btn' onclick='addTableRow("${tableId}", ${JSON.stringify(field.columns).replace(/'/g,"&#39;")})'>+</button>`;
-                html += `<button type='button' class='table-btn' onclick='removeTableRow(this)'>-</button>`;
-                html += `</td></tr>`;
+                let tableData = formData[field.id] || [];
+                let tableLength = (Array.isArray(tableData) && tableData.length) ? tableData.length : 1;
+                for (let i = 0; i < tableLength; i++) {
+                    html += `<tr>`;
+                    field.columns.forEach((col, idx) => {
+                        html += `<td><input type="${col.type || 'text'}" value="${tableData && tableData[i] ? tableData[i][col.field] : ''}" class="${col.field}" name="${tableId}_${col.field}" ${field.pattern ? ` pattern='${field.pattern}'` : ''}/></td>`;
+                    });
+                    html += `<td style='text-align:center'>`;
+                    html += `<button type='button' class='table-btn' onclick='addTableRow("${tableId}", ${JSON.stringify(field.columns).replace(/'/g,"&#39;")})'>+</button>`;
+                    html += `<button type='button' class='table-btn' onclick='removeTableRow(this)'>-</button>`;
+                    html += `</td></tr>`;
+                }
                 html += `</tbody></table></div>`;
             } else if (field.type === 'select' && Array.isArray(field.options)) {
                 html += `<div class="form-row"><label for="${formId}_${field.id}" >${field.label || ''}</label><select id="${formId}_${field.id}" name="${formId}_${field.id}"${field.required ? ' required' : ''}${field.readonly ? ' disabled' : ''}>`;
                 field.options.forEach(opt => {
-                    html += `<option value="${opt.value}">${opt.text}</option>`;
+                    if (opt.value === formData[field.id]) html += `<option value="${opt.value}" selected>${opt.text}</option>`;
+                    else html += `<option value="${opt.value}">${opt.text}</option>`;
                 });
                 html += `</select></div>`;
+            } else if (field.type === 'date') {
+                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" value="${convertDateFormat(formData[field.id] || '')}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
             } else {
-                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
+                html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" value="${formData[field.id] || ''}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
             }
         });
         html += `</fieldset>`;
@@ -1363,8 +1403,8 @@ async function showPreviewModal(htmlFilePath, formId) {
     modal.style.display = 'flex';
     previewSettings.find(f => {
         if (f.id === formId) {
-            ledhdFormData = f.formdata;
-            ledhdForm = f.form;
+            previewFormData = f.formdata;
+            previewForm = f.form;
         }
     });
     try {
@@ -1373,8 +1413,8 @@ async function showPreviewModal(htmlFilePath, formId) {
         previewHtml.innerHTML = html;        
 
         // Inject dữ liệu vào template
-        if (ledhdFormData && ledhdForm) {
-            populateLEDHDTemplate(ledhdFormData, ledhdForm, previewHtml);
+        if (previewFormData && previewForm) {
+            populateLEDHDTemplate(previewFormData, previewForm, previewHtml);
         }
     } catch (err) {
         previewHtml.innerHTML = '<p style="color:red">Không thể tải file!</p>';
@@ -1448,7 +1488,7 @@ function downloadPDF() {
 
     const opt = {
         margin: [10, 10, 10, 10], // mm
-        filename: fileName + '.pdf',
+        filename: downloadFileName + '.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
             scale: 1.5,
@@ -1491,5 +1531,5 @@ function downloadWord() {
         margins: { top: 720, right: 720, bottom: 720, left: 720 }
     };
     const converted = window.htmlDocx.asBlob(html, options);
-    saveAs(converted, fileName + '.docx');
+    saveAs(converted, downloadFileName + '.docx');
 }
