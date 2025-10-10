@@ -1114,6 +1114,8 @@ function generateForm(jsonData, formId, formData) {
                 html += `</select></div>`;
             } else if (field.type === 'date') {
                 html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" value="${convertDateFormat(formData[field.id] || '')}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
+            } else if (field.type === 'textarea') {
+                html += `<div class="form-row"><label>${field.label || ''}</label><textarea id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}>${formData[field.id] || ''}</textarea></div>`;
             } else {
                 html += `<div class="form-row"><label>${field.label || ''}</label><input type="${field.type || 'text'}" value="${formData[field.id] || ''}" id="${formId}_${field.id}" name="${formId}_${field.id}" placeholder="${field.placeholder || ''}"${field.required ? ' required' : ''}${field.readonly ? ' readonly' : ''}${field.pattern ? ` pattern='${field.pattern}'` : ''}></div>`;
             }
@@ -1319,7 +1321,7 @@ function numberToVietnamese(amount) {
 
 
 // Hàm điền dữ liệu vào template
-function populateLEDHDTemplate(formdata, form, container) {
+function populateTemplate(formdata, form, container) {
     form.forEach(section => {
         section.child.forEach(field => {
             if (field.type === 'table') {
@@ -1381,6 +1383,12 @@ function populateLEDHDTemplate(formdata, form, container) {
                     let [day, month, year] = (formdata[field.id] || '').split("/");
                     input.innerText = `ngày ${day} tháng ${month} năm ${year}`;
                 }
+            } else if (field.type === 'textarea') {
+                const textarea = container.querySelector(`#${field.id}`);
+				let dataVal = formdata[field.id].replaceAll("\n", "<br>");
+                if (textarea) {
+                    textarea.innerHTML = dataVal || '';
+                }
             } else {
                 const input = container.querySelector(`#${field.id}`);
                 if (input) {
@@ -1414,7 +1422,7 @@ async function showPreviewModal(htmlFilePath, formId) {
 
         // Inject dữ liệu vào template
         if (previewFormData && previewForm) {
-            populateLEDHDTemplate(previewFormData, previewForm, previewHtml);
+            populateTemplate(previewFormData, previewForm, previewHtml);
         }
     } catch (err) {
         previewHtml.innerHTML = '<p style="color:red">Không thể tải file!</p>';

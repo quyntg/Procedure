@@ -612,12 +612,17 @@ h2 {
     margin-bottom: 0.3rem;
 }
 .form-row input[type="text"],
-.form-row input[type="date"] {
+.form-row input[type="date"],
+.form-row textarea {
     padding: 0.6rem 0.9rem;
     border: 1px solid #bae6fd;
     border-radius: 0.6rem;
     outline: none;
     transition: border 0.2s;
+}
+.form-row textarea {
+    min-height: 200px;
+    resize: vertical;
 }
 .form-row input[type="text"]:focus,
 .form-row input[type="date"]:focus {

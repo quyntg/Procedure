@@ -15,28 +15,86 @@
                 background: #fff;
                 font-size: 13px;
             }
+
             .preview-content header {
                 text-align: center;
                 margin-bottom: 20px;
             }
+
             .preview-content h1 {
                 font-size: 16px;
                 margin: 6px 0;
             }
-            .preview-content .center { text-align: center; }
-            .preview-content .right { text-align: right; }
-            .preview-content p { 
-                margin: 8px 0; 
-                /* text-align: justify;  */
+
+            .preview-content .small {
+                font-size: 13px;
+                font-weight: bold;
             }
+
+            .preview-content .center {
+                text-align: center;
+            }
+
+            .preview-content .right {
+                text-align: right;
+            }
+
+            .preview-content p, ul, ol {
+                margin: 8px 16px 0 16px;
+                text-align: justify;
+            }
+
+            .preview-content table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 12px 0;
+            }
+
+            .preview-content table td:not(:nth-child(2)),
+            .preview-content table td:not(:nth-child(3)),
+            .preview-content table td:not(:nth-child(5)) {
+                text-align: center;
+            }
+
+            .preview-content table, th, td {
+                border: 1px solid #333;
+            }
+
+            .preview-content th, td {
+                padding: 8px;
+                vertical-align: top;
+            }
+
+            .preview-content th {
+                background: #f1f1f1;
+            }
+
+            .preview-content .no-border {
+                border: 0;
+            }
+
             .preview-content .signature {
                 margin-top: 40px;
                 display: flex;
-                justify-content: flex-end;
+                justify-content: space-between;
             }
+
             .preview-content .sig-box {
                 text-align: center;
                 width: 50%;
+            }
+
+            .preview-content .muted {
+                font-style: italic;
+            }
+
+            .preview-content .muted span {
+                margin-left: 20px;
+            }
+
+            .preview-content .section-title {
+                font-weight: 600;
+                margin-top: 6px;
             }
 
             @media print {
@@ -59,37 +117,39 @@
                 <div style="font-size: 12pt; font-weight: bold; text-align: center;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
                 <div style="font-size: 12pt; font-weight: bold; text-align: center;">Độc lập – Tự do – Hạnh phúc</div>
                 <div style="margin: 2px 0 10px 0; text-align: center;">____________________</div>
-                <div style="font-size: 16pt; font-weight: bold; text-align: center;">ĐỀ NGHỊ TẠM ỨNG</div>
+                <div style="font-size: 16pt; font-weight: bold; text-align: center;">BIÊN BẢN BÀN GIAO NGHIỆM THU THANH LÝ HỢP ĐỒNG</div>
                 <div style="font-size: 12pt; font-weight: bold; text-align: center;">Số: <span id="soDeNghi"></span></div>
             </header>
 
             <p style="font-family:'Times New Roman', Times, serif;">Căn cứ vào hợp đồng số <span id="soHopDong" style="font-family:'Times New Roman', Times, serif;"></span> mà hai bên đã ký kết ngày <span id="ngayHopDong"></span></p>
-            <p>Hôm nay, <span id="ngayBienBan"></span>, chúng tôi gồm:</p>
+            <p>Hôm nay, <span id="ngayTamUng"></span>, chúng tôi gồm:</p>
             <p><strong>BÊN B (Bên bán): CÔNG TY CỔ PHẦN TRUYỀN THÔNG SỐ ADVTV</strong></p>
             <p>Địa chỉ: 652 Trịnh Kiểm, Đại lộ Đông Tây, Phường Đông Quang, Thanh Hóa</p>
             <p>Mã số thuế: 2802923278</p>
             <p>Đại diện: Ông Nguyễn Hữu Thế &nbsp;&nbsp; Chức vụ: Giám đốc</p>
-            <p>Tài khoản nhận thanh toán: 3661122168888</p>
-            <p>Tại Ngân hàng: MBBank - Ngân hàng thương mại cổ phần Quân đội chi nhánh Thanh Hóa</p>
-            <p>Tên tài khoản: Công ty Cổ phần Truyền thông số ADVTV (Hoặc ADVTV.JSC)</p>
-            <p>Xin gửi giấy Đề nghị tạm ứng này tới bên mua là:</p>
             <p style="font-family:'Times New Roman', Times, serif;"><strong>BÊN A (Bên mua): <span id="hoTenKhachHang" style="text-transform: uppercase; font-family:'Times New Roman', Times, serif;"></span></strong></p>
             <p style="font-family:'Times New Roman', Times, serif;">Địa chỉ: <span id="diaChiKhachHang" style="font-family:'Times New Roman', Times, serif;"></span></p>
-            <p style="font-family:'Times New Roman', Times, serif;">Mã số thuế: <span id="maSoThue" style="font-family:'Times New Roman', Times, serif;"></span></p>
             <p style="font-family:'Times New Roman', Times, serif;">Đại diện: Ông/Bà: <span id="daiDienKhachHang" style="font-family:'Times New Roman', Times, serif;"></span> &nbsp;&nbsp;&nbsp; Chức vụ: <span id="chucVuDaiDien" style="font-family:'Times New Roman', Times, serif;"></span></p>
-            <p style="font-family:'Times New Roman', Times, serif;">Số tài khoản: <span id="soTaiKhoanKhachHang" style="font-family:'Times New Roman', Times, serif;"></span></p>
-            <p><strong>Số tiền tạm ứng:</strong> <span id="soTienTamUng" style="font-family:'Times New Roman', Times, serif;"></span> vnđ<br>
-            (Bằng chữ: <span id="bangChu" style="font-family:'Times New Roman', Times, serif;"></span>)</p>
-            <p><strong>Nội dung tạm ứng:</strong> <span id="noiDungTamUng" style="font-family:'Times New Roman', Times, serif;"></span></p>
-            <p><em>Kính đề nghị quý khách hàng thực hiện chuyển tiền tạm ứng theo điều khoản hợp đồng để chúng tôi có căn cứ thực hiện các bước tiếp theo trong hợp đồng ./.</em></p>
-
+            <p>Tiến hành bàn giao và tiếp nhận hàng hóa theo bảng kê sau:</p>
+            <table id="bangKe" style="width:100%; border-collapse:collapse; margin:12px 0; font-family:'Times New Roman', Times, serif;">
+                <thead>
+                    <tr>
+                        <th style="width:5%; border:1px solid #333; padding:8px; background:#f1f1f1; vertical-align:top; font-family:'Times New Roman', Times, serif;">STT</th>
+                        <th style="width:45%; border:1px solid #333; padding:8px; background:#f1f1f1; vertical-align:top; font-family:'Times New Roman', Times, serif;">TÊN HÀNG</th>
+                        <th style="width:20%; border:1px solid #333; padding:8px; background:#f1f1f1; vertical-align:top; font-family:'Times New Roman', Times, serif;">QUY CÁCH</th>
+                        <th style="width:15%; border:1px solid #333; padding:8px; background:#f1f1f1; vertical-align:top; font-family:'Times New Roman', Times, serif;">SỐ LƯỢNG</th>
+                        <th style="width:15%; border:1px solid #333; padding:8px; background:#f1f1f1; vertical-align:top; font-family:'Times New Roman', Times, serif;">GHI CHÚ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <p><span id="ghiChuThem" style="font-family:'Times New Roman', Times, serif;"></span></p>
+            <p>Biên bản này là căn cứ để hai bên tiến hành thanh lý hợp đồng.</p>
+            <p>Mọi tài sản, hàng hóa mà bên A đã tiếp nhận thì được quyền sử dụng, khai thác và chịu trách nhiệm bảo quản. </p>
             <table style="width:100%; margin-top:40px; border:none; font-family:'Times New Roman', Times, serif;">
                 <tr>
-                    <td style="text-align:center; width:50%; border:none; vertical-align:top; font-family:'Times New Roman', Times, serif;"><strong></strong></td>
-                    <td style="text-align:center; width:50%; border:none; vertical-align:top; font-family:'Times New Roman', Times, serif;"><strong>Trân trọng cảm ơn!</strong></td>
-                </tr>
-                <tr>
-                    <td style="text-align:center; width:50%; border:none; vertical-align:top; font-family:'Times New Roman', Times, serif;"><strong></strong></td>
+                    <td style="text-align:center; width:50%; border:none; vertical-align:top; font-family:'Times New Roman', Times, serif;"><strong>ĐẠI DIỆN BÊN A</strong></td>
                     <td style="text-align:center; width:50%; border:none; vertical-align:top; font-family:'Times New Roman', Times, serif;"><strong>ĐẠI DIỆN BÊN B</strong></td>
                 </tr>
             </table>
