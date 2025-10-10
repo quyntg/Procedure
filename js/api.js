@@ -26,6 +26,13 @@ function doGet(e) {
 	} else if (action === "nextStepDossier") {
 		const dossierId = e.parameter.dossierId;
 		result = JSON.stringify(nextStepDossier(dossierId));
+	} else if (action === "createDossier") {
+		const name = e.parameter.name;
+		const customer = e.parameter.customer;
+		const procedure = e.parameter.procedure;
+		const status = e.parameter.status;
+		const type = e.parameter.type;
+		result = JSON.stringify(createDossier(name, customer, procedure, status, type));
 	} else {
 		result = JSON.stringify({
 			error: "Invalid action"
@@ -626,3 +633,50 @@ function handleSaveDossierFile(e) {
   }
 }
 
+function createDossier(name, customer, procedure, status, type) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossiers');
+  if (!sheet) return { success: false, message: 'Sheet dossiers không tồn tại.' };
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  // Tìm id lớn nhất hiện tại
+  let maxId = 0;
+  for (let i = 1; i < data.length; i++) {
+    const idStr = String(data[i][0] || '');
+    if (/^D25\d{7}$/.test(idStr)) {
+      const num = parseInt(idStr.slice(3), 10);
+      if (num > maxId) maxId = num;
+    }
+  }
+  const newId = 'D25' + String(maxId + 1).padStart(7, '0');
+  let now = new Date();
+  let dd = String(now.getDate()).padStart(2, '0');
+  let mm = String(now.getMonth() + 1).padStart(2, '0');
+  let yyyy = now.getFullYear();
+  let todayStr = dd + '/' + mm + '/' + yyyy;
+
+  // Tạo dòng mới
+  let row = [];
+  headers.forEach(h => {
+    if (h === 'id') row.push(newId);
+    else if (h === 'name') row.push(name);
+    else if (h === 'customer') row.push(customer);
+    else if (h === 'procedure') row.push(procedure);
+    else if (h === 'status') row.push(status);
+    else if (h === 'type') row.push(type);
+    else if (h === 'createDate') row.push(todayStr);
+    else row.push('');
+  });
+  sheet.appendRow(row);
+
+  return {
+    success: true,
+    id: newId,
+    name,
+    customer,
+    procedure,
+    status,
+    type,
+    createDate: todayStr,
+    modifiedDate: todayStr
+  };
+}

@@ -1541,3 +1541,42 @@ function downloadWord() {
     const converted = window.htmlDocx.asBlob(html, options);
     saveAs(converted, downloadFileName + '.docx');
 }
+
+function createDossier() {
+    document.getElementById('createDossierModal').style.display = 'flex';
+}
+
+function closeDossierModal() {
+    document.getElementById('createDossierModal').style.display = 'none';
+}
+
+document.getElementById('dossierForm').onsubmit = async function(e) {
+    e.preventDefault();
+    // Lấy dữ liệu từ form
+    const name = document.getElementById('dossierName').value;
+    const customer = document.getElementById('dossierCustomer').value;
+    const procedure = document.getElementById('dossierProcedure').value;
+    const status = document.getElementById('dossierStatus').value;
+    const type = document.getElementById('dossierType').value;
+
+    // Gọi API tạo hồ sơ
+    try {
+        const res = await fetch('YOUR_API_URL?action=createDossier'
+        + '&name=' + encodeURIComponent(name)
+        + '&customer=' + encodeURIComponent(customer)
+        + '&procedure=' + encodeURIComponent(procedure)
+        + '&status=' + encodeURIComponent(status)
+        + '&type=' + encodeURIComponent(type)
+        );
+        const data = await res.json();
+        if (data.success) {
+        alert('Tạo hồ sơ thành công!');
+        closeDossierModal();
+        // TODO: reload lại danh sách hồ sơ nếu cần
+        } else {
+        alert('Lỗi: ' + (data.message || 'Không tạo được hồ sơ'));
+        }
+    } catch (err) {
+        alert('Lỗi kết nối API');
+    }
+};
