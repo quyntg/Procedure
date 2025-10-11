@@ -15,7 +15,7 @@
     <style>
     </style>
 </head>
-<body>
+<body data-page="home">
     <main id="app"></main>
     <script>
         // page('/', () => {
@@ -49,7 +49,7 @@
 
         page('/home', () => {
             loadPage('html/home.html', 'app').then(() => {
-                document.body.removeAttribute('data-page');
+                document.body.setAttribute('data-page', 'home');   
                 initHomeToggleIcons();
                 if (wasProcedure) {
                     loadProcedures();

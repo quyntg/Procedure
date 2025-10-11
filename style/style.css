@@ -1,4 +1,7 @@
 /* Nút cộng/trừ cho bảng động */
+body[data-page='home'] #add-record-btn {
+    display: block;
+}
 .table-btn {
     background: #e0f2fe;
     color: #0284c7;
@@ -675,6 +678,15 @@ h2 {
     display: flex;
     gap: 1.2rem;
     justify-content: center;
+}
+.modal-content .close-modal {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    cursor: pointer;
+    font-size: 1.5em;
+    color: #888;
+    transition: color 0.2s;
 }
 #modern-content .record-detail-container {
     width: 100%;

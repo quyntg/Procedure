@@ -1542,26 +1542,83 @@ function downloadWord() {
     saveAs(converted, downloadFileName + '.docx');
 }
 
-function createDossier() {
+function openCreateDossierModal() {
+    initCreateDossierForm();
     document.getElementById('createDossierModal').style.display = 'flex';
 }
 
-function closeDossierModal() {
-    document.getElementById('createDossierModal').style.display = 'none';
+function initCreateDossierForm() {
+    let errorMsgEl = document.getElementById('create-dossier-error');
+    errorMsgEl.innerText = '';
+
+    let dossierForm = document.getElementById('dossierForm');
+    if (dossierForm) dossierForm.reset();
+
+    let dossierProcedureEl = document.getElementById('dossierProcedure');
+    let dossierStatusEl = document.getElementById('dossierStatus');
+
+    for (let i = dossierProcedureEl.options.length - 1; i > 0; i--) {
+        if (dossierProcedureEl.options[i].value !== "") {
+            dossierProcedureEl.remove(i);
+        }
+    }
+    for (let i = dossierStatusEl.options.length - 1; i > 0; i--) {
+        if (dossierStatusEl.options[i].value !== "") {
+            dossierStatusEl.remove(i);
+        }
+    }
+
+    procedures.forEach(proc => {
+        let option = document.createElement('option');
+        option.value = proc.id;
+        option.text = proc.name;
+        dossierProcedureEl.appendChild(option);
+    });
 }
 
-document.getElementById('dossierForm').onsubmit = async function(e) {
-    e.preventDefault();
+function initStatusOptions() {
+    let procedureId = document.getElementById('dossierProcedure').value;
+    let dossierStatusEl = document.getElementById('dossierStatus');
+    for (let i = dossierStatusEl.options.length - 1; i > 0; i--) {
+        if (dossierStatusEl.options[i].value !== "") {
+            dossierStatusEl.remove(i);
+        }
+    }
+    procedures.filter(p => p.id == procedureId).forEach(proc => {
+        if (proc.children.length > 0) {
+            proc.children.forEach(st => {
+                let option = document.createElement('option');
+                option.value = st.id;
+                option.text = st.name;
+                dossierStatusEl.appendChild(option);
+            });
+        }        
+    });
+}
+
+async function createDossier(btn) {
+    let errorMsgEl = document.getElementById('create-dossier-error');
+    initSpinner(btn);
+    
     // Lấy dữ liệu từ form
     const name = document.getElementById('dossierName').value;
     const customer = document.getElementById('dossierCustomer').value;
     const procedure = document.getElementById('dossierProcedure').value;
-    const status = document.getElementById('dossierStatus').value;
+    let status = document.getElementById('dossierStatus').value;
     const type = document.getElementById('dossierType').value;
 
+    if (!name || !customer || !procedure || !type) {
+        removeSpinner(btn);
+        errorMsgEl.innerText = 'Vui lòng nhập đầy đủ thông tin!';
+        return;
+    }
+    if (status === "") {
+        let dossierStatusEl = document.getElementById('dossierStatus');
+        status = dossierStatusEl.options[1].value;
+    }
     // Gọi API tạo hồ sơ
     try {
-        const res = await fetch('YOUR_API_URL?action=createDossier'
+        const res = await fetch(ggApiUrl + '?action=createDossier'
         + '&name=' + encodeURIComponent(name)
         + '&customer=' + encodeURIComponent(customer)
         + '&procedure=' + encodeURIComponent(procedure)
@@ -1570,13 +1627,20 @@ document.getElementById('dossierForm').onsubmit = async function(e) {
         );
         const data = await res.json();
         if (data.success) {
-        alert('Tạo hồ sơ thành công!');
-        closeDossierModal();
-        // TODO: reload lại danh sách hồ sơ nếu cần
+            removeSpinner(btn);
+            showModal('notification', { message: 'Tạo hồ sơ thành công!' });
+            closeDossierModal();
+            // TODO: reload lại danh sách hồ sơ nếu cần
         } else {
-        alert('Lỗi: ' + (data.message || 'Không tạo được hồ sơ'));
+            errorMsgEl.innerText = 'Lỗi: ' + (data.message || 'Không tạo được hồ sơ');
+            removeSpinner(btn);
         }
     } catch (err) {
-        alert('Lỗi kết nối API');
+        errorMsgEl.innerText = 'Lỗi kết nối API';
+        removeSpinner(btn);
     }
-};
+}
+
+function closeDossierModal() {
+    document.getElementById('createDossierModal').style.display = 'none';
+}

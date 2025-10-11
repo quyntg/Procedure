@@ -32,7 +32,7 @@
             <main class="content modern-content" id="modern-content">
                 <div class="content-header">
                     <h2><span class="icon-folder">📁 </span><span id="modern-name"></span></h2>
-                    <button class="add-record-btn" onclick="createDossier()">+ Thêm hồ sơ</button>
+                    <button class="add-record-btn" id="add-record-btn" onclick="openCreateDossierModal()">+ Thêm hồ sơ</button>
                 </div>
                 <div class="table-responsive">
                     <table class="dossiers-table modern-table" id="dossiersTable">
@@ -56,37 +56,47 @@
                 </div>
             </main>
         </div>
-    </body><!-- Modal tạo hồ sơ mới -->
-    <div id="createDossierModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:999; align-items:center; justify-content:center;">
-        <div style="background:#fff; padding:24px; border-radius:8px; min-width:320px; max-width:90vw; margin:auto; position:relative;">
-            <h3>Tạo hồ sơ mới</h3>
-            <form id="dossierForm">
-            <div style="margin-bottom:10px;">
-                <label>Tên hồ sơ:</label>
-                <input type="text" id="dossierName" required>
+    </body>
+    <div class="modal" id="createDossierModal">
+        <div class="modal-content">
+            <div class="form-row">
+                <label style="font-size: 24px;">Tạo hồ sơ mới</label>
             </div>
-            <div style="margin-bottom:10px;">
-                <label>Khách hàng:</label>
-                <input type="text" id="dossierCustomer" required>
-            </div>
-            <div style="margin-bottom:10px;">
-                <label>Quy trình:</label>
-                <input type="text" id="dossierProcedure" required>
-            </div>
-            <div style="margin-bottom:10px;">
-                <label>Trạng thái:</label>
-                <input type="text" id="dossierStatus" required>
-            </div>
-            <div style="margin-bottom:10px;">
-                <label>Loại:</label>
-                <input type="text" id="dossierType" required>
-            </div>
-            <div style="text-align:right;">
-                <button type="button" onclick="closeDossierModal()">Huỷ</button>
-                <button type="submit">Tạo</button>
-            </div>
+            <form id="dossierForm" style="text-align: left; width: 30vw">
+                <div class="form-row">
+                    <label for="dossierName">Tên hồ sơ:</label>
+                    <input type="text" id="dossierName" required>
+                </div>
+                <div class="form-row">
+                    <label for="dossierCustomer">Khách hàng:</label>
+                    <input type="text" id="dossierCustomer" required>
+                </div>
+                <div class="form-row">
+                    <label for="dossierProcedure">Quy trình:</label>
+                    <select id="dossierProcedure" onchange="initStatusOptions()" required>
+                        <option value="">Chọn quy trình</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="dossierStatus">Trạng thái:</label>
+                    <select id="dossierStatus">
+                        <option value="">Chọn trạng thái</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="dossierType">Loại:</label>
+                    <select id="dossierType" required>
+                        <option value="">Chọn loại</option>
+                        <option value="advtv">Theo mẫu ADVTV</option>
+                        <option value="other">Theo mẫu khách hàng</option>
+                    </select>
+                </div>
+                <div id="create-dossier-error" style="color: #e11d48; font-size: 15px; margin-bottom: 8px; min-height: 22px;"></div>
+                <div class="modal-actions">
+                    <button class="action-btn" type="submit" onclick="createDossier(this)">Tạo</button>
+                    <button class="action-btn" type="button" onclick="closeDossierModal()">Huỷ</button>
+                </div>
             </form>
-            <span style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:1.5em;" onclick="closeDossierModal()">×</span>
         </div>
     </div>
 </html>
