@@ -26,6 +26,9 @@ function doGet(e) {
 	} else if (action === "nextStepDossier") {
 		const dossierId = e.parameter.dossierId;
 		result = JSON.stringify(nextStepDossier(dossierId));
+	} else if (action === "loadDossierFiles") {
+		const dossierId = e.parameter.dossierId;
+		result = JSON.stringify(loadDossierFiles(dossierId));
 	} else if (action === "createDossier") {
 		const name = e.parameter.name;
 		const customer = e.parameter.customer;
@@ -149,7 +152,7 @@ function handleUploadRequest(e) {
         else if (h === 'templateShorten') row.push(templateShorten);
         else if (h === 'dossierId') row.push(dossierId);
         else if (h === 'data') row.push('');
-        else if (h === 'createDate') row.push(todayStr);
+        else if (h === 'createDate') row.push("'" + String(todayStr));
         else row.push('');
       });
       sheet.appendRow(row);
@@ -593,7 +596,7 @@ function handleSaveDossierFile(e) {
       sheet.getRange(foundRow, nameIdx + 1).setValue(fileName);
       sheet.getRange(foundRow, urlIdx + 1).setValue(url);
       sheet.getRange(foundRow, dataIdx + 1).setValue(formdata);
-      sheet.getRange(foundRow, modifiedIdx + 1).setValue(todayStr);
+      sheet.getRange(foundRow, modifiedIdx + 1).setValue("'" + String(todayStr));
       return {
         success: true,
         id: data[foundRow - 1][0],
@@ -614,7 +617,7 @@ function handleSaveDossierFile(e) {
         else if (h === 'templateShorten') row.push(templateShorten);
         else if (h === 'dossierId') row.push(dossierId);
         else if (h === 'data') row.push(formdata);
-        else if (h === 'createDate') row.push(todayStr);
+        else if (h === 'createDate') row.push("'" + String(todayStr));
         else row.push('');
       });
       sheet.appendRow(row);
@@ -663,7 +666,7 @@ function createDossier(name, customer, procedure, status, type) {
     else if (h === 'procedure') row.push(procedure);
     else if (h === 'status') row.push(status);
     else if (h === 'type') row.push(type);
-    else if (h === 'createDate') row.push(todayStr);
+    else if (h === 'createDate') row.push("'" + String(todayStr));
     else row.push('');
   });
   sheet.appendRow(row);
@@ -677,6 +680,25 @@ function createDossier(name, customer, procedure, status, type) {
     status,
     type,
     createDate: todayStr,
-    modifiedDate: todayStr
+    modifiedDate: ''
   };
+}
+
+function loadDossierFiles(dossierId) {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('dossierFiles');
+    if (!sheet) return { success: false, message: 'Sheet dossierFiles không tồn tại.' };
+    var data = sheet.getDataRange().getValues();
+    var headers = data.shift();
+    var dossierIdIdx = headers.indexOf('dossierId');
+    var result = [];
+    for (var i = 0; i < data.length; i++) {
+        if (String(data[i][dossierIdIdx]) === String(dossierId)) {
+            var row = {};
+            for (var j = 0; j < headers.length; j++) {
+                row[headers[j]] = data[i][j];
+            }
+            result.push(row);
+        }
+    }
+    return result;
 }

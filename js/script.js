@@ -1598,6 +1598,7 @@ function initStatusOptions() {
 
 async function createDossier(btn) {
     let errorMsgEl = document.getElementById('create-dossier-error');
+    errorMsgEl.innerText = '';
     initSpinner(btn);
     
     // Lấy dữ liệu từ form
@@ -1610,6 +1611,7 @@ async function createDossier(btn) {
     if (!name || !customer || !procedure || !type) {
         removeSpinner(btn);
         errorMsgEl.innerText = 'Vui lòng nhập đầy đủ thông tin!';
+        errorMsgEl.style.color = 'red';
         return;
     }
     if (status === "") {
@@ -1628,19 +1630,38 @@ async function createDossier(btn) {
         const data = await res.json();
         if (data.success) {
             removeSpinner(btn);
-            showModal('notification', { message: 'Tạo hồ sơ thành công!' });
-            closeDossierModal();
+            errorMsgEl.innerText = 'Tạo hồ sơ thành công!';
+            errorMsgEl.style.color = 'green';
+            btn.disabled = true;
+            setTimeout(() => {
+                closeDossierModal();
+                loadProcedures();
+            }, 2000);
             // TODO: reload lại danh sách hồ sơ nếu cần
         } else {
             errorMsgEl.innerText = 'Lỗi: ' + (data.message || 'Không tạo được hồ sơ');
+            errorMsgEl.style.color = 'red';
             removeSpinner(btn);
         }
     } catch (err) {
         errorMsgEl.innerText = 'Lỗi kết nối API';
+        errorMsgEl.style.color = 'red';
         removeSpinner(btn);
     }
 }
 
 function closeDossierModal() {
     document.getElementById('createDossierModal').style.display = 'none';
+}
+
+function openDossierFileModal () {
+    document.getElementById('dossierFileModal').style.display = 'flex';
+    let dossierId = sessionStorage.getItem('dossierId') || '';
+    if (dossierId) {
+        loadDossierFiles(dossierId);
+    }
+}
+
+function closeDossierFileModal () {
+    document.getElementById('dossierFileModal').style.display = 'none';
 }

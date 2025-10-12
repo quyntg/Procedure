@@ -6,6 +6,9 @@
         <div class="info-row"><span class="info-label">Ngày cập nhật hồ sơ:</span> <span id="record-modifiedDate"></span></div>
         <div class="info-row"><span class="info-label">Tên hồ sơ:</span> <span id="record-name"></span></div>
         <div class="info-row"><span class="info-label">Khách hàng:</span> <span id="record-customer"></span></div>
+        <div class="info-row">
+            <button class="action-btn" onclick="openDossierFileModal()">Xem thành phần hồ sơ</button>
+        </div>
     </div>
     <div id="record-files"></div>
     <div class="record-actions">
@@ -32,5 +35,31 @@
             <button class="action-btn" onclick="closePreview()">Đóng</button>
         </div>
         <div id="preview-html" class="preview-content"></div>
+    </div>
+</div>
+
+<div class="modal" id="dossierFileModal">
+    <div class="modal-content">
+        <div class="form-row">
+            <label style="font-size: 22px;">Thành phần hồ sơ</label>
+        </div>
+        <div id="new-record-error" style="color: #e11d48; font-size: 15px; margin-bottom: 8px; min-height: 22px;"></div>
+        <form id="newRecordForm" style="text-align: left; width: 30vw">
+            <div class="form-row">
+                <label for="newRecordName">Tên thành phần:</label>
+                <input type="text" id="newRecordName" required>
+            </div>
+            <div class="form-row">
+                <label for="newRecordType">Loại thành phần:</label>
+                <select id="newRecordType" required>
+                    <option value="">Chọn loại</option>
+                    <option value="file">Tệp đính kèm</option>
+                    <option value="form">Biểu mẫu</option>
+                </select>
+            </div>
+            <div class="modal-actions" style="text-align: center;">
+                <button class="action-btn" type="button" onclick="closeDossierFileModal()">Đóng</button>
+            </div>
+        </form>
     </div>
 </div>
