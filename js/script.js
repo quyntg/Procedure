@@ -589,6 +589,29 @@ async function getDossierDetail(id) {
     });
 }
 
+// dossier js
+async function loadDossierFiles(dossierId) {
+    showGlobalSpinner();
+    return fetch(ggApiUrl + '?action=loadDossierFiles&dossierId=' + encodeURIComponent(dossierId), {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data && Array.isArray(data)) {
+            return data;
+        }
+        return [];
+    })
+    .catch(() => {
+    })
+    .finally(data => {
+        hideGlobalSpinner();
+    });
+}
+
 function viewRecord(id) {
     sessionStorage.setItem('dossierId', id);
     page('/dossier?id=' + id);
@@ -1654,11 +1677,23 @@ function closeDossierModal() {
     document.getElementById('createDossierModal').style.display = 'none';
 }
 
-function openDossierFileModal () {
+async function openDossierFileModal () {
     document.getElementById('dossierFileModal').style.display = 'flex';
     let dossierId = sessionStorage.getItem('dossierId') || '';
     if (dossierId) {
-        loadDossierFiles(dossierId);
+        let dossierFiles = await loadDossierFiles(dossierId);
+        let dossierFilesDiv = document.getElementById('dossierFileList'); 
+        let html = '';
+        if (dossierFiles.length > 0) {
+            html += '<div style="text-align: left; width: 20vw;">';
+            dossierFiles.forEach(f => {
+                html += `<div class='uploaded-file-item'>${f.templateName}: <a style='margin-left: 20px;' href='${f.url}' target='_blank'>${f.name}</a></div>`;
+            });
+            html += '</div>';
+        } else {
+            html = '<p style="text-align: center; color: red;">Chưa có file nào.</p>';
+        }
+        dossierFilesDiv.innerHTML = html;
     }
 }
 

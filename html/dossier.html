@@ -43,23 +43,9 @@
         <div class="form-row">
             <label style="font-size: 22px;">Thành phần hồ sơ</label>
         </div>
-        <div id="new-record-error" style="color: #e11d48; font-size: 15px; margin-bottom: 8px; min-height: 22px;"></div>
-        <form id="newRecordForm" style="text-align: left; width: 30vw">
-            <div class="form-row">
-                <label for="newRecordName">Tên thành phần:</label>
-                <input type="text" id="newRecordName" required>
-            </div>
-            <div class="form-row">
-                <label for="newRecordType">Loại thành phần:</label>
-                <select id="newRecordType" required>
-                    <option value="">Chọn loại</option>
-                    <option value="file">Tệp đính kèm</option>
-                    <option value="form">Biểu mẫu</option>
-                </select>
-            </div>
-            <div class="modal-actions" style="text-align: center;">
-                <button class="action-btn" type="button" onclick="closeDossierFileModal()">Đóng</button>
-            </div>
-        </form>
+        <div id="dossierFileList"></div>
+        <div class="modal-actions" style="text-align: center;">
+            <button class="action-btn" type="button" onclick="closeDossierFileModal()">Đóng</button>
+        </div>
     </div>
 </div>
