@@ -70,7 +70,11 @@ function hideGlobalSpinner() {
 }
 
 function goBack() {
-    window.history.back();
+    window.history.back();    
+    setTimeout(() => {
+        renderDossiers();
+        renderPagination(currentPage);
+    }, 1000);
 }
 
 // Nếu F5 ở trang /procedure thì chuyển về /home
@@ -235,12 +239,17 @@ async function loadDossiers(procedure, status) {
 
     currentPage = 1;
     renderDossiers();
-    renderPagination();
+    renderPagination(currentPage);
 }
 
 async function loadDossierDetail(id) {
     let dossierDetail = await getDossierDetail(id);
     sessionStorage.setItem('dossierDetail', JSON.stringify(dossierDetail));
+    if (dossierDetail.nextStep === 'done') {
+        document.getElementById('next-step-btn').style.display = 'none';
+    } else {
+        document.getElementById('next-step-btn').style.display = '';
+    }
 }
 
 async function renderProcedures() {
@@ -432,7 +441,7 @@ function renderDossiers() {
     }
 }
 
-function renderPagination() {
+function renderPagination(cur) {
     const totalPages = Math.ceil(dossiers.length / pageSize);
     const pagDiv = document.getElementById('pagination');
     if (!pagDiv) return;
@@ -440,11 +449,11 @@ function renderPagination() {
     for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement('button');
         btn.textContent = i;
-        if (i === currentPage) btn.classList.add('active');
+        if (i === cur) btn.classList.add('active');
         btn.onclick = () => { 
             currentPage = i; 
             renderDossiers(); 
-            renderPagination(); 
+            renderPagination(cur); 
         };
         pagDiv.appendChild(btn);
     }
@@ -714,7 +723,7 @@ function initDossierDetail(dossierDetail) {
     let recordModifiedDateEl = document.getElementById('record-modifiedDate');
     if (recordModifiedDateEl) recordModifiedDateEl.textContent = dossierDetail.modifiedDate || '';
 
-    renderRecordFiles(dossierDetail.files || []);
+    renderRecordFiles(dossierDetail.files || [], dossierDetail.type);
 }
 
 async function nextStepDossierHandler(dossierId) {
@@ -810,7 +819,7 @@ function applyRules(rules, formId) {
     });
 }
 
-function renderRecordFiles(files) {
+function renderRecordFiles(files, type) {
     previewSettings = [];
     const container = document.getElementById('record-files');
     if (container) container.innerHTML = '';
@@ -825,7 +834,7 @@ function renderRecordFiles(files) {
             </div>`;
         html += `<div class="record-file-form" id="file-form-${file.id}" style="display: none;">`;
         // Nếu file.form rỗng hoặc không có, hiển thị giao diện upload file và danh sách file đã upload
-        if (!file.form || file.form === '' || file.form === '{}' || file.form === '[]') {
+        if ((!file.form || file.form === '' || file.form === '{}' || file.form === '[]') || type === 'other') {
             html += `<div class='upload-section'>
                 <input type='file' id='upload-input-${file.id}' multiple />
                 <button class='action-btn' onclick='uploadFileHandler("${file.id}", "${file.shorten}")'>Tải lên</button>
@@ -886,7 +895,7 @@ function renderRecordFiles(files) {
         html += `</div>`;
         fileDiv.innerHTML = html;
         if (fileDiv && container) container.appendChild(fileDiv);
-
+        if (type === 'other') return; // Nếu là loại khác thì không áp dụng rule
         if ((!file.form || file.form === '' || file.form === '{}' || file.form === '[]') && (!file.rule || file.rule === '' || file.rule === '{}' || file.rule === '[]')) return;
         rules = JSON.parse(file.rule);
 
