@@ -343,6 +343,8 @@ function getDossierDetail(id) {
   var fileIdx = filesHeaders.indexOf('id');
   var dossierFileDossierIdIdx = dossierFilesHeaders.indexOf('dossierId');
   var templateFileIdIdx = dossierFilesHeaders.indexOf('templateFileId');
+  var templateShortenIdx = dossierFilesHeaders.indexOf('templateShorten');
+  var dataIdx = dossierFilesHeaders.indexOf('data');
 
   for (var i = 0; i < dossiersData.length; i++) {
     if (String(dossiersData[i][idIdx]) === String(id)) {
@@ -379,6 +381,19 @@ function getDossierDetail(id) {
                   }
                 }
                 fileObj['dossierFiles'] = dfArr;
+
+                var mappings = JSON.parse(fileObj['mapping'] || '{}');
+                var mappedData = {};
+                mappings.forEach(key => {
+                  for (var q = 0; q < dossierFilesData.length; q++) {
+                    if (dossierFilesData[q][dossierFileDossierIdIdx] === id && dossierFilesData[q][templateShortenIdx] === key['mappingTemplateId']) {
+                      var dataObj = JSON.parse(dossierFilesData[q][dataIdx] || '{}');
+                      mappedData[key['field']] = dataObj[key['mappingField']] || '';
+                    }
+                  }
+                });
+                fileObj['mappedData'] = mappedData;
+                Logger.log(mappedData)
                 files.push(fileObj);
               }
             }

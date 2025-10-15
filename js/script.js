@@ -12,6 +12,8 @@ let wasProcedure = true; // Biến kiểm tra xem trước đó có phải đang
 let recordFiles = []; // Mảng lưu trữ các file đã upload
 let hasFiles = false;
 let rules = []; // Mảng lưu trữ các rule hiện tại
+let mappings = []; // Mảng lưu trữ các mapping hiện tại
+let mappedData = {}; // Mảng lưu trữ các mappedData hiện tại
 let downloadFileName = ""; // Tên file khi download
 
 // Áp dụng rule
@@ -898,6 +900,8 @@ function renderRecordFiles(files, type) {
         if (type === 'other') return; // Nếu là loại khác thì không áp dụng rule
         if ((!file.form || file.form === '' || file.form === '{}' || file.form === '[]') && (!file.rule || file.rule === '' || file.rule === '{}' || file.rule === '[]')) return;
         rules = JSON.parse(file.rule);
+        mappings = JSON.parse(file.mapping);
+        mappedData = file.mappedData;
 
         // Bind sự kiện
         if (rules && Array.isArray(rules)) {
@@ -925,6 +929,25 @@ function renderRecordFiles(files, type) {
                         }
                     }
                 });
+            });
+        }
+
+        if ((mappedData && Object.keys(mappedData).length > 0) && (mappings && Array.isArray(mappings))) {
+            mappings.forEach(mapping => {
+                if (mapping.type === "table") {
+                    document.querySelectorAll(`#${file.id}_${mapping.field} .${mapping.child}`).forEach(el => {
+                        el.value = mappedData[mapping.field] || '';
+                    });
+                } else if (mapping.type === "convertInTable") {
+                    let table = document.getElementById(`${file.id}_${mapping.id}`);
+                    
+                } else if (mapping.type === "date") {
+                    const input = document.getElementById(`${file.id}_${mapping.field}`);
+                    input.value = convertDateFormat(mappedData[mapping.field]) || '';
+                } else {
+                    const input = document.getElementById(`${file.id}_${mapping.field}`);
+                    input.value = mappedData[mapping.field] || '';
+                }
             });
         }
     });
