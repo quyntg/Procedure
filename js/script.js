@@ -1373,7 +1373,28 @@ function numberToVietnamese(amount) {
 
 
 //end dossier js
+function isNumeric(value) {
+    return !isNaN(value) && value.toString().trim() !== '';
+}
 
+function formatCurrency(val) {
+    if (val === null || val === undefined) return '';
+    // Nếu đã là số hoặc chuỗi số thì parse
+    const raw = String(val).trim();
+    // Loại bỏ ký tự không phải số, dấu trừ, dấu thập phân
+    const cleaned = raw.replace(/[^\d\-,.]/g, '').replace(/,/g, '.');
+    const num = Number(cleaned);
+    if (isNaN(num)) return raw;
+    // Sử dụng toLocaleString để có dấu phân cách hàng nghìn là dấu chấm
+    // 'de-DE' => 1.234.567,89 (dot thousands, comma decimals)
+    // Nếu là số nguyên hiển thị không có phần thập phân
+    if (Number.isInteger(num)) {
+        return num.toLocaleString('de-DE');
+    } else {
+        // giữ tối đa 2 chữ số thập phân (thay đổi nếu cần)
+        return num.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+}
 
 // Hàm điền dữ liệu vào template
 function populateTemplate(formdata, form, container) {
@@ -1390,7 +1411,11 @@ function populateTemplate(formdata, form, container) {
                             const tr = document.createElement('tr');
                             field.columns.forEach(col => {
                                 const td = document.createElement('td');
-                                td.innerText = row[col.field] || '';
+                                if (isNumeric(row[col.field])) {
+                                    td.innerText = formatCurrency(row[col.field]);
+                                } else {    
+                                    td.innerText = row[col.field] || '';
+                                }
                                 if (col.field !== 'ten') {
                                     td.style.textAlign = 'center';
                                 }
@@ -1416,10 +1441,11 @@ function populateTemplate(formdata, form, container) {
                 specialContainer.style.textAlign = 'justify';
                 (formdata[field.id] || []).forEach((row, index) => {
                     const p = document.createElement('p');
+                    const tienFormatted = row.tien ? formatCurrency(row.tien) + ' đ' : '';
                     if (index == (length - 1)) {
-                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền còn lại là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
+                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền còn lại là: <strong>${tienFormatted}</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
                     } else {
-                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền là: <strong>${row.tien} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
+                        p.innerHTML = `+ Lần ${index + 1}: Bên A thanh toán cho bên B số tiền là: <strong>${tienFormatted} đ</strong> (Bằng chữ: ${row.chu}) ${row.dieukien}.`;
                     }
                     specialContainer.appendChild(p);
                 });
@@ -1450,7 +1476,11 @@ function populateTemplate(formdata, form, container) {
                     if (field.pattern && formdata[field.id] < 10) {
                         input.textContent = `0${formdata[field.id]}` || '';
                     } else {
-                        input.textContent = formdata[field.id] || '';
+                        if (isNumeric(formdata[field.id])) {
+							input.textContent = formatCurrency(formdata[field.id]);
+						} else {    
+							input.textContent = formdata[field.id] || '';
+						}
                     }
                 }
             }

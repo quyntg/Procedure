@@ -381,8 +381,8 @@ function getDossierDetail(id) {
                   }
                 }
                 fileObj['dossierFiles'] = dfArr;
-
-                var mappings = JSON.parse(fileObj['mapping'] || '{}');
+                Logger.log(fileObj)
+                var mappings = fileObj['mapping'] ? JSON.parse(fileObj['mapping']) : [];
                 var mappedData = {};
                 mappings.forEach(key => {
                   for (var q = 0; q < dossierFilesData.length; q++) {
@@ -393,7 +393,6 @@ function getDossierDetail(id) {
                   }
                 });
                 fileObj['mappedData'] = mappedData;
-                Logger.log(mappedData)
                 files.push(fileObj);
               }
             }
