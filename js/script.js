@@ -1476,7 +1476,7 @@ function populateTemplate(formdata, form, container) {
                     if (field.pattern && formdata[field.id] < 10) {
                         input.textContent = `0${formdata[field.id]}` || '';
                     } else {
-                        if (isNumeric(formdata[field.id])) {
+                        if (isNumeric(formdata[field.id]) && !field.id.includes('maSoThue') && !field.id.includes('soTaiKhoan')) {
 							input.textContent = formatCurrency(formdata[field.id]);
 						} else {    
 							input.textContent = formdata[field.id] || '';
